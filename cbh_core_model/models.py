@@ -2,7 +2,14 @@
 from django.db import models, connection
 
 from solo.models import SingletonModel
-
+from django_extensions.db.models import TimeStampedModel
+from django.db.models.signals import post_save
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.auth.models import Permission, User, Group
+from django.db.models import Avg, Max, Min, Count
+from django.db.models.fields import NOT_PROVIDED
+from django.core.exceptions import ValidationError, ObjectDoesNotExist
+from django.template.defaultfilters import slugify
 
 def get_all_hstore_values(table,column, key, is_list=False, extra_where=" True"):
     '''Using an hstore query from the reference here
@@ -119,6 +126,10 @@ class ProjectType(TimeStampedModel):
     name = models.CharField(max_length=100, db_index=True, null=True, blank=True, default=None)
     show_compounds = models.BooleanField(default=True)
 
+    level_0 = models.ForeignKey("cbh_core_model.CustomFieldConfig", related_name="level_0", null=True, blank=True, default=None,)
+    level_1 = models.ForeignKey("cbh_core_model.CustomFieldConfig", related_name="level_1", null=True, blank=True, default=None,)
+    level_2 = models.ForeignKey("cbh_core_model.CustomFieldConfig", related_name="level_2", null=True, blank=True, default=None,)
+
     def __unicode__(self):
         return self.name
 
@@ -132,7 +143,7 @@ class Project(TimeStampedModel, ProjectPermissionMixin):
     name = models.CharField(max_length=50, db_index=True, null=True, blank=True, default=None)
     project_key = models.SlugField(max_length=50, db_index=True, null=True, blank=True, default=None, unique=True)
     created_by = models.ForeignKey("auth.User")
-    custom_field_config = models.ForeignKey("cbh_chembl_model_extension.CustomFieldConfig", related_name="project",null=True, blank=True, default=None, )
+    custom_field_config = models.ForeignKey("cbh_core_model.CustomFieldConfig", related_name="project",null=True, blank=True, default=None, )
     project_type = models.ForeignKey(ProjectType,null=True, blank=True, default=None)
     is_default = models.BooleanField(default=False)
     #allow configuration of project types 
@@ -171,14 +182,7 @@ class CustomFieldConfig(TimeStampedModel):
 
     
 
-class CBHCompoundMultipleBatch(TimeStampedModel):
-    '''Holds a list of batches'''
-    created_by = models.CharField(max_length=50, db_index=True, null=True, blank=True, default=None)
-    project = models.ForeignKey(Project, null=True, blank=True, default=None)
-    uploaded_data = PickledObjectField()
-    uploaded_file = models.OneToOneField(FlowFile, null=True, blank=True, default=None)
-    saved = models.BooleanField(default=False)
-    #batches = models.ForeignKey(CBHCompoundBatch, null=True, default=None)
+
 
 class SkinningConfig(SingletonModel):
     '''Holds information about custom system messages and other customisable elements'''
@@ -242,7 +246,7 @@ class PinnedCustomField(TimeStampedModel):
     field_key = models.CharField(max_length=50,  default="")
     name = models.CharField(max_length=50)
     description = models.CharField(max_length=1024, blank=True, null=True, default="")
-    custom_field_config = models.ForeignKey("cbh_chembl_model_extension.CustomFieldConfig", related_name='pinned_custom_field')
+    custom_field_config = models.ForeignKey("cbh_core_model.CustomFieldConfig", related_name='pinned_custom_field')
     required = models.BooleanField(default=False)
     part_of_blinded_key = models.BooleanField(default=False, verbose_name="blind key")
     field_type = models.CharField(default="char", choices=((name, value["name"]) for name, value in FIELD_TYPE_CHOICES.items()), max_length=15, )
@@ -253,11 +257,11 @@ class PinnedCustomField(TimeStampedModel):
         is_array = False
         if self.FIELD_TYPE_CHOICES[self.field_type]["data"]["type"] == "array":
             is_array=True
-        db_items = get_all_hstore_values("cbh_chembl_model_extension_cbhcompoundbatch  inner join cbh_chembl_model_extension_project on cbh_chembl_model_extension_project.id = cbh_chembl_model_extension_cbhcompoundbatch.project_id ", 
+        db_items = get_all_hstore_values("cbh_chembl_model_extension_cbhcompoundbatch  inner join cbh_core_model_project on cbh_core_model_project.id = cbh_chembl_model_extension_cbhcompoundbatch.project_id ", 
             "custom_fields", 
             self.name, 
             is_list=is_array, 
-            extra_where="cbh_chembl_model_extension_project.project_key ='%s'" % projectKey)
+            extra_where="cbh_core_model_project.project_key ='%s'" % projectKey)
         return  [item for item in db_items]
 
     def get_allowed_items(self,projectKey):
