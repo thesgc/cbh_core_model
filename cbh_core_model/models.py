@@ -126,12 +126,100 @@ class ProjectType(TimeStampedModel):
     name = models.CharField(max_length=100, db_index=True, null=True, blank=True, default=None)
     show_compounds = models.BooleanField(default=True)
 
-    level_0 = models.ForeignKey("cbh_core_model.CustomFieldConfig", related_name="level_0", null=True, blank=True, default=None,)
-    level_1 = models.ForeignKey("cbh_core_model.CustomFieldConfig", related_name="level_1", null=True, blank=True, default=None,)
-    level_2 = models.ForeignKey("cbh_core_model.CustomFieldConfig", related_name="level_2", null=True, blank=True, default=None,)
 
     def __unicode__(self):
         return self.name
+
+
+
+
+
+
+
+class DataType(TimeStampedModel):
+    name = models.CharField(unique=True, max_length=20)
+
+    def get_space_replaced_name(self):
+        return self.name.replace(u" ", u"__space__")
+
+    def __unicode__(self):
+        return self.name
+
+
+class CustomFieldConfig(TimeStampedModel):
+    name = models.CharField(unique=True, max_length=50)
+    created_by = models.ForeignKey("auth.User")
+    schemaform = models.TextField(default = "", null=True, blank=True, )
+    data_type = models.ForeignKey(DataType, null=True, blank=True, default=None)
+
+    def __unicode__(self):
+        dt_name = ""
+        try:
+            dt_name = self.data_type.name
+        except AttributeError:
+            pass
+        return "%s: %s" % (dt_name, self.name)
+
+    def get_space_replaced_name(self):
+        return self.name.replace(u" ", u"__space__")
+
+    
+
+class DataFormConfig(TimeStampedModel):
+    '''Shared configuration object - all projects can see this and potentially use it
+    Object name comes from a concatentaion of all of the levels of custom field config
+    '''
+    created_by = models.ForeignKey("auth.User")
+    l0 = models.ForeignKey("cbh_core_model.CustomFieldConfig", 
+        related_name="l0", 
+        help_text="The first level in the hierarchy of the form you are trying to create. For example, if curating industries, companies,  employees , teams and departments, l0 would be industries.")
+    l1 = models.ForeignKey("cbh_core_model.CustomFieldConfig", 
+        related_name="l1", 
+        null=True, 
+        blank=True, 
+        default=None,
+        help_text="The second level in the hierarchy of the form you are trying to create. For example, if curating industries, companies,  employees , teams and departments, l1 would be companies.")
+    l2 = models.ForeignKey("cbh_core_model.CustomFieldConfig", 
+        related_name="l2", null=True, blank=True, default=None,
+        help_text="The third level in the hierarchy of the form you are trying to create. For example, if curating industries, companies,  employees , teams and departments, l2 would be departments.")
+    l3 = models.ForeignKey("cbh_core_model.CustomFieldConfig", 
+        related_name="l3",
+        null=True, 
+        blank=True, 
+        default=None,
+        help_text="The forth level in the hierarchy of the form you are trying to create. For example, if curating industries, companies,  employees , teams and departments, l3 would be teams.")
+    l4 = models.ForeignKey("cbh_core_model.CustomFieldConfig", 
+        related_name="l4", 
+        null=True, 
+        blank=True, 
+        default=None,
+        help_text="The fifth level in the hierarchy of the form you are trying to create. For example, if curating industries, companies,  employees , teams and departments, l4 would be employees.")
+
+    def __unicode__(self):
+        string = ""
+        if self.l0:
+            string += self.l0.__unicode__()
+        if self.l1:
+            string += " >> " + self.l1.__unicode__()
+        if self.l2:
+            string += " >> " + self.l2.__unicode__()
+        if self.l3:
+            string += " >> " + self.l3.__unicode__()
+        if self.l4:
+            string += " >> " + self.l4.__unicode__()
+        return string
+
+
+    class Meta:
+        unique_together = (('l0','l1','l2','l3','l4'),)
+
+
+
+
+
+
+
+
 
 
 
@@ -146,8 +234,8 @@ class Project(TimeStampedModel, ProjectPermissionMixin):
     custom_field_config = models.ForeignKey("cbh_core_model.CustomFieldConfig", related_name="project",null=True, blank=True, default=None, )
     project_type = models.ForeignKey(ProjectType,null=True, blank=True, default=None)
     is_default = models.BooleanField(default=False)
-    #allow configuration of project types 
-    #project_type = models.
+    enabled_forms = models.ManyToManyField(DataFormConfig)
+
     
     class Meta:
         get_latest_by = 'created'
@@ -172,15 +260,6 @@ post_save.connect(sync_permissions, sender=Project, dispatch_uid="proj_perms")
 
 
 
-
-class CustomFieldConfig(TimeStampedModel):
-    name = models.CharField(unique=True, max_length=50)
-    created_by = models.ForeignKey("auth.User")
-    schemaform = models.TextField(default = "", null=True, blank=True, )
-    def __unicode__(self):
-        return self.name
-
-    
 
 
 
@@ -252,6 +331,7 @@ class PinnedCustomField(TimeStampedModel):
     field_type = models.CharField(default="char", choices=((name, value["name"]) for name, value in FIELD_TYPE_CHOICES.items()), max_length=15, )
     allowed_values = models.CharField(max_length=1024, blank=True, null=True, default="")
     position = models.PositiveSmallIntegerField()
+    default = models.CharField(max_length=500, default="", blank=True)
 
     def get_dropdown_list(self, projectKey):
         is_array = False
@@ -270,6 +350,12 @@ class PinnedCustomField(TimeStampedModel):
         testdata = [{"label" : item.strip(), "value": item.strip()} for item in setitems if item] 
         searchdata = [{"label" : "[%s] %s" % (self.name ,item.strip()), "value" : "%s|%s" % (self.name ,item.strip())} for item in setitems if item] 
         return (testdata, searchdata)
+
+    def get_space_replaced_name(self):
+        return self.name.replace(u" ", u"__space__")
+
+
+
 
     class Meta:
         ordering = ['position']
