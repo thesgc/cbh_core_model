@@ -147,7 +147,7 @@ class DataType(TimeStampedModel):
 
 
 class CustomFieldConfig(TimeStampedModel):
-    name = models.CharField(unique=True, max_length=50)
+    name = models.CharField(unique=True, max_length=100)
     created_by = models.ForeignKey("auth.User")
     schemaform = models.TextField(default = "", null=True, blank=True, )
     data_type = models.ForeignKey(DataType, null=True, blank=True, default=None)
@@ -228,7 +228,7 @@ class DataFormConfig(TimeStampedModel):
 
 class Project(TimeStampedModel, ProjectPermissionMixin):
     ''' Project is a holder for moleculedictionary objects and for batches'''
-    name = models.CharField(max_length=50, db_index=True, null=True, blank=True, default=None)
+    name = models.CharField(max_length=100, db_index=True, null=True, blank=True, default=None)
     project_key = models.SlugField(max_length=50, db_index=True, null=True, blank=True, default=None, unique=True)
     created_by = models.ForeignKey("auth.User")
     custom_field_config = models.ForeignKey("cbh_core_model.CustomFieldConfig", related_name="project",null=True, blank=True, default=None, )
