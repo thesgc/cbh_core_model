@@ -213,7 +213,19 @@ class DataFormConfig(TimeStampedModel):
     class Meta:
         unique_together = (('l0','l1','l2','l3','l4'),)
 
-
+    def last_level(self):
+        last_level = ""
+        if  self.l4_id is not None:
+            return "l4"
+        if  self.l3_id is not None:
+            return "l3"
+        if  self.l2_id is not None:
+            return  "l2"
+        if  self.l1_id is not None:
+            return "l1"
+        if  self.l0_id is not None:
+            return  "l0"
+        return last_level
 
 
 
