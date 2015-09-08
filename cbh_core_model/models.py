@@ -17,7 +17,7 @@ def get_all_hstore_values(table,column, key, is_list=False, extra_where=" True")
     where project_id = {{project_id}}
     '''
     cursor = connection.cursor()
-    sql = "SELECT DISTINCT {column} -> '{key}' FROM {table} where {column} -> '{key}' != '' and {extra_where};".format( **{"table":table, "key":key, "column": column,  "extra_where": extra_where})
+    sql = u"SELECT DISTINCT {column} -> '{key}' FROM {table} where {column} -> '{key}' != '' and {extra_where};".format( **{"table":unicode(table), "key":unicode(key), "column": unicode(column),  "extra_where": unicode(extra_where)})
     cursor.execute(sql)
     mytuple = cursor.fetchall()
     items = []
@@ -265,6 +265,7 @@ def sync_permissions(sender, instance, created, **kwargs):
     '''After saving the project make sure it has entries in the permissions table'''
     if created is True:
         instance.sync_permissions()
+
         instance.make_editor(instance.created_by)
 
 post_save.connect(sync_permissions, sender=Project, dispatch_uid="proj_perms")
