@@ -364,6 +364,12 @@ class PinnedCustomField(TimeStampedModel):
         searchdata = [{"label" : "[%s] %s" % (self.name ,item.strip()), "value" : "%s|%s" % (self.name ,item.strip())} for item in setitems if item] 
         return (testdata, searchdata)
 
+    def get_items_simple(self):
+        items = [item.strip() for item in self.allowed_values.split(",") if item.strip()]
+        setitems = sorted(list(set(items)))
+        testdata = [{"label" : item.strip(), "value": item.strip()} for item in setitems if item]
+        return testdata
+
     def get_space_replaced_name(self):
         return self.name.replace(u" ", u"__space__")
 
