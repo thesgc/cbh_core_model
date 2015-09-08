@@ -147,7 +147,7 @@ class DataType(TimeStampedModel):
 
 
 class CustomFieldConfig(TimeStampedModel):
-    name = models.CharField(unique=True, max_length=50)
+    name = models.CharField(unique=True, max_length=100)
     created_by = models.ForeignKey("auth.User")
     schemaform = models.TextField(default = "", null=True, blank=True, )
     data_type = models.ForeignKey(DataType, null=True, blank=True, default=None)
@@ -213,7 +213,19 @@ class DataFormConfig(TimeStampedModel):
     class Meta:
         unique_together = (('l0','l1','l2','l3','l4'),)
 
-
+    def last_level(self):
+        last_level = ""
+        if  self.l4_id is not None:
+            return "l4"
+        if  self.l3_id is not None:
+            return "l3"
+        if  self.l2_id is not None:
+            return  "l2"
+        if  self.l1_id is not None:
+            return "l1"
+        if  self.l0_id is not None:
+            return  "l0"
+        return last_level
 
 
 
@@ -228,7 +240,7 @@ class DataFormConfig(TimeStampedModel):
 
 class Project(TimeStampedModel, ProjectPermissionMixin):
     ''' Project is a holder for moleculedictionary objects and for batches'''
-    name = models.CharField(max_length=50, db_index=True, null=True, blank=True, default=None)
+    name = models.CharField(max_length=100, db_index=True, null=True, blank=True, default=None)
     project_key = models.SlugField(max_length=50, db_index=True, null=True, blank=True, default=None, unique=True)
     created_by = models.ForeignKey("auth.User")
     custom_field_config = models.ForeignKey("cbh_core_model.CustomFieldConfig", related_name="project",null=True, blank=True, default=None, )
