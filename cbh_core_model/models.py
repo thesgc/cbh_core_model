@@ -293,6 +293,15 @@ class SkinningConfig(SingletonModel):
 
 
 
+# class DataTransformation(TimeStampedModel):
+#     name = models.CharField(max_length=100, null=True, blank=True, default=None)
+#     uri = models.CharField(max_length=1000, null=True, blank=True, default=None)
+#     target_repository_api 
+#     patch = models.TextField()
+
+#     def __unicode__(self):
+#         return "%s - %s" % (self.name, self.uri)
+
 
 
 
@@ -345,6 +354,9 @@ class PinnedCustomField(TimeStampedModel):
     allowed_values = models.CharField(max_length=1024, blank=True, null=True, default="")
     position = models.PositiveSmallIntegerField()
     default = models.CharField(max_length=500, default="", blank=True)
+    # data_transformation = models.ForeignKey("cbh_core_model.DataTransformation", 
+    #     related_name="pinned_custom_field", 
+    #     default=None, blank=True)
 
     def get_dropdown_list(self, projectKey):
         is_array = False
@@ -379,5 +391,6 @@ class PinnedCustomField(TimeStampedModel):
     class Meta:
         ordering = ['position']
         get_latest_by = 'created'
+
 
 
