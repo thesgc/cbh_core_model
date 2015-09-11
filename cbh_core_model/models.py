@@ -170,6 +170,9 @@ class DataFormConfig(TimeStampedModel):
     Object name comes from a concatentaion of all of the levels of custom field config
     '''
     created_by = models.ForeignKey("auth.User")
+    human_added = models.NullBooleanField(default=True)
+    parent = models.ForeignKey('self',related_name='children', default=None, null=True, blank=True)
+
     l0 = models.ForeignKey("cbh_core_model.CustomFieldConfig", 
         related_name="l0", 
         help_text="The first level in the hierarchy of the form you are trying to create. For example, if curating industries, companies,  employees , teams and departments, l0 would be industries.")
@@ -212,6 +215,7 @@ class DataFormConfig(TimeStampedModel):
 
     class Meta:
         unique_together = (('l0','l1','l2','l3','l4'),)
+        ordering = ('l0','l1','l2','l3','l4')
 
     def last_level(self):
         last_level = ""
@@ -227,10 +231,47 @@ class DataFormConfig(TimeStampedModel):
             return  "l0"
         return last_level
 
+    # def natural_key(self):
+    #     keys = []
+    #     for level in ["l1", "l2", "l3", "l4", "l0"]:
+    #         if getattr(self, level):
+    #             str(keys.append(getattr(self, level)))
+    #     return "_".join(keys)
 
 
+    def get_all_ancestor_objects(obj, request, tree_builder={}):
+        levels = ["l0", "l1", "l2", "l3", "l4"]
 
+        used_levels = []
+        for lev in levels:
+            if getattr(obj, lev) is not None and lev != obj.last_level():
+                used_levels.append(lev)
 
+       
+        filters = []
+        for i in range(1,len(used_levels)+1):
+            level_name = used_levels[i-1]
+            level_filters = {lev: getattr(obj, lev) for lev in used_levels[:i]}
+            filters.insert(0,level_filters)
+        new_objects = []
+        
+        for index, filter_set in enumerate(filters):
+            defaults = {lev:None for lev in levels}
+            new_filters = defaults.update(filter_set)
+            defaults["defaults"] = {"created_by_id" : request.user.id}
+            defaults["human_added"] = False
+            new_object, created = DataFormConfig.objects.get_or_create(**defaults)
+            permitted_child_array = tree_builder.get(str(new_object.id), [])
+            permitted_child_array.append(obj)
+            tree_builder[new_object.id] = list(set(permitted_child_array))
+            obj.parent_id = new_object.id
+            obj.save()
+            new_objects.append(new_object.id)
+            obj = new_object
+            if index == len(filters) -1:
+                tree_builder["root"] = [obj]
+
+        
 
 
 
