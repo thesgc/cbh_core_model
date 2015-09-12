@@ -163,7 +163,10 @@ class CustomFieldConfig(TimeStampedModel):
     def get_space_replaced_name(self):
         return self.name.replace(u" ", u"__space__")
 
-    
+class DataFormConfigManager(models.Manager):
+    def get_queryset(self):
+        return super(DataFormConfigManager, self).get_queryset().select_related("created_by","l0___created_by", "l0__data_type", "l1___created_by", "l1__data_type", "l2___created_by", "l2__data_type", "l3___created_by", "l3__data_type", "l4___created_by", "l4__data_type")
+
 
 class DataFormConfig(TimeStampedModel):
     '''Shared configuration object - all projects can see this and potentially use it
@@ -197,6 +200,7 @@ class DataFormConfig(TimeStampedModel):
         blank=True, 
         default=None,
         help_text="The fifth level in the hierarchy of the form you are trying to create. For example, if curating industries, companies,  employees , teams and departments, l4 would be employees.")
+    objects = DataFormConfigManager()
 
     def __unicode__(self):
         string = ""
@@ -239,12 +243,13 @@ class DataFormConfig(TimeStampedModel):
     #     return "_".join(keys)
 
 
-    def get_all_ancestor_objects(obj, request, tree_builder={}):
-        levels = ["l0", "l1", "l2", "l3", "l4"]
 
+    def get_all_ancestor_objects(obj, request, tree_builder={}, uri_stub="", create=False):
+        levels = ["l0", "l1", "l2", "l3", "l4"]
+        levels = ["%s_id" % l for l in levels]
         used_levels = []
         for lev in levels:
-            if getattr(obj, lev) is not None and lev != obj.last_level():
+            if getattr(obj, lev) is not None and lev != "%s_id" % obj.last_level():
                 used_levels.append(lev)
 
        
@@ -253,20 +258,23 @@ class DataFormConfig(TimeStampedModel):
             level_name = used_levels[i-1]
             level_filters = {lev: getattr(obj, lev) for lev in used_levels[:i]}
             filters.insert(0,level_filters)
-        new_objects = []
         
         for index, filter_set in enumerate(filters):
             defaults = {lev:None for lev in levels}
             new_filters = defaults.update(filter_set)
-            defaults["defaults"] = {"created_by_id" : request.user.id}
-            defaults["human_added"] = False
-            new_object, created = DataFormConfig.objects.get_or_create(**defaults)
-            permitted_child_array = tree_builder.get(str(new_object.id), [])
+            
+            if create:
+                defaults["defaults"] = {"created_by_id" : request.user.id,
+                                    "human_added" : False}
+                new_object, created = DataFormConfig.objects.get_or_create(**defaults)
+                obj.parent_id = new_object.id
+                obj.save()
+            else:            
+                new_object = DataFormConfig.objects.get(**defaults)
+            permitted_child_array = tree_builder.get("%s/%d"  % (uri_stub, new_object.id), [])
             permitted_child_array.append(obj)
-            tree_builder[new_object.id] = list(set(permitted_child_array))
-            obj.parent_id = new_object.id
-            obj.save()
-            new_objects.append(new_object.id)
+            tree_builder["%s/%d"  % (uri_stub, new_object.id)] = list(set(permitted_child_array))
+            
             obj = new_object
             if index == len(filters) -1:
                 tree_builder["root"] = [obj]
