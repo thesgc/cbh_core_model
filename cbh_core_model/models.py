@@ -244,7 +244,7 @@ class DataFormConfig(TimeStampedModel):
 
 
 
-    def get_all_ancestor_objects(obj, request, tree_builder={}, uri_stub="", create=False):
+    def get_all_ancestor_objects(obj, request, tree_builder={}, uri_stub=""):
         levels = ["l0", "l1", "l2", "l3", "l4"]
         levels = ["%s_id" % l for l in levels]
         used_levels = []
@@ -263,14 +263,13 @@ class DataFormConfig(TimeStampedModel):
             defaults = {lev:None for lev in levels}
             new_filters = defaults.update(filter_set)
             
-            if create:
-                defaults["defaults"] = {"created_by_id" : request.user.id,
+            
+            defaults["defaults"] = {"created_by_id" : request.user.id,
                                     "human_added" : False}
-                new_object, created = DataFormConfig.objects.get_or_create(**defaults)
-                obj.parent_id = new_object.id
-                obj.save()
-            else:            
-                new_object = DataFormConfig.objects.get(**defaults)
+            new_object, created = DataFormConfig.objects.get_or_create(**defaults)
+            obj.parent_id = new_object.id
+            obj.save()
+
             permitted_child_array = tree_builder.get("%s/%d"  % (uri_stub, new_object.id), [])
             permitted_child_array.append(obj)
             tree_builder["%s/%d"  % (uri_stub, new_object.id)] = list(set(permitted_child_array))
