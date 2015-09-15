@@ -10,6 +10,7 @@ from django.db.models import Avg, Max, Min, Count
 from django.db.models.fields import NOT_PROVIDED
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.template.defaultfilters import slugify
+from collections import OrderedDict
 
 def get_all_hstore_values(table,column, key, is_list=False, extra_where=" True"):
     '''Using an hstore query from the reference here
@@ -137,9 +138,9 @@ class ProjectType(TimeStampedModel):
 
 
 class DataType(TimeStampedModel):
-    name = models.CharField(unique=True, max_length=20)
-    uri = models.CharField(max_length=1000)
-    version = models.CharField(max_length=10)
+    name = models.CharField(unique=True, max_length=100)
+    uri = models.CharField(max_length=1000, default="")
+    version = models.CharField(max_length=10, default="")
 
     def get_space_replaced_name(self):
         return self.name.replace(u" ", u"__space__")
@@ -372,25 +373,24 @@ class PinnedCustomField(TimeStampedModel):
     LINK = "href"
 
 
-    FIELD_TYPE_CHOICES = {
-                            "char" : {"name" : "Short text field", "data": { "type": "string"}},
-
-                            TEXT : {"name" : "Short text field", "data": { "type": "string" ,"icon":"<span class ='glyphicon glyphicon-font'></span>" }},
-                            TEXTAREA: {"name" :"Full text", "data": { "icon":"<span class ='glyphicon glyphicon-font'></span>","type": "string" , "format" : "textarea"}},
-                            UISELECT: {"name" :"Choice field", "data": { "type": "string" , "format" : "uiselect"}},
-                            INTEGER: {"name" :"Integer field", "data": { "icon":"<span class ='glyphicon glyphicon-stats'></span>" ,"type": "integer"}},
-                            NUMBER: {"name" :"Decimal field", "data": { "icon":"<span class ='glyphicon glyphicon-sound-5-1'></span>","type": "number"}},
-                            UISELECTTAG: {"name" : "Choice allowing create", "data":  { "icon":"<span class ='glyphicon glyphicon-tag'></span>", "type": "string", "format" : "uiselect"}},
-                            UISELECTTAGS: {"name" : "Tags field allowing create" , "data": { "icon":"<span class ='glyphicon glyphicon-tags'></span>","type": "array", "format" : "uiselect", "options": {
+    FIELD_TYPE_CHOICES = OrderedDict((
+                           ( TEXT , {"name" : "Short text field", "data": { "type": "string" ,"icon":"<span class ='glyphicon glyphicon-font'></span>" }}),
+                           (  "char" , {"name" : "Short text field", "data": { "type": "string"}}),
+                           ( TEXTAREA, {"name" :"Full text", "data": { "icon":"<span class ='glyphicon glyphicon-font'></span>","type": "string" , "format" : "textarea"}}),
+                           ( UISELECT, {"name" :"Choice field", "data": { "type": "string" , "format" : "uiselect"}}),
+                           ( INTEGER, {"name" :"Integer field", "data": { "icon":"<span class ='glyphicon glyphicon-stats'></span>" ,"type": "integer"}}),
+                           ( NUMBER, {"name" :"Decimal field", "data": { "icon":"<span class ='glyphicon glyphicon-sound-5-1'></span>","type": "number"}}),
+                           ( UISELECTTAG, {"name" : "Choice allowing create", "data":  { "icon":"<span class ='glyphicon glyphicon-tag'></span>", "type": "string", "format" : "uiselect"}}),
+                           ( UISELECTTAGS, {"name" : "Tags field allowing create" , "data": { "icon":"<span class ='glyphicon glyphicon-tags'></span>","type": "array", "format" : "uiselect", "options": {
                                       "tagging": "tagFunction" ,
                                       "taggingLabel": "(adding new)",
                                       "taggingTokens": "",
-                                 }}},
-                            PERCENTAGE: {"name" :"Percentage field", "data": { "icon":"<span class ='glyphicon'>%</span>", "type": "number", "maximum" : 100.0, "minimum": 0.1}},
-                            DATE:  {"name": "Date Field" , "data":{"icon":"<span class ='glyphicon glyphicon-calendar'></span>","type": "string",   "format": "date"}},
-                            LINK : {"name" : "Link to server or external", "data": { "format": "href", "type": "string" ,"icon":"<span class ='glyphicon glyphicon glyphicon-new-window'></span>" }},
-                            IMAGE : {"name" : "Image link to embed", "data": {"format": "imghref", "type": "string" ,"icon":"<span class ='glyphicon glyphicon glyphicon-picture'></span>" }},
-                        }
+                                 }}}),
+                           ( PERCENTAGE, {"name" :"Percentage field", "data": { "icon":"<span class ='glyphicon'>%</span>", "type": "number", "maximum" : 100.0, "minimum": 0.1}}),
+                           ( DATE,  {"name": "Date Field" , "data":{"icon":"<span class ='glyphicon glyphicon-calendar'></span>","type": "string",   "format": "date"}}),
+                           ( LINK , {"name" : "Link to server or external", "data": { "format": "href", "type": "string" ,"icon":"<span class ='glyphicon glyphicon glyphicon-new-window'></span>" }}),
+                           ( IMAGE , {"name" : "Image link to embed", "data": {"format": "imghref", "type": "string" ,"icon":"<span class ='glyphicon glyphicon glyphicon-picture'></span>" }}),
+                        ))
 
 
     field_key = models.CharField(max_length=50,  default="")
@@ -438,6 +438,9 @@ class PinnedCustomField(TimeStampedModel):
 
     def get_space_replaced_name(self):
         return self.name.replace(u" ", u"__space__")
+
+    def __unicode__(self):
+        return "%s  %s  %s" % (self.pinned_for_datatype,self.name, self.field_type)
 
 
 
