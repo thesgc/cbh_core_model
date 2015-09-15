@@ -138,6 +138,8 @@ class ProjectType(TimeStampedModel):
 
 class DataType(TimeStampedModel):
     name = models.CharField(unique=True, max_length=20)
+    uri = models.CharField(max_length=1000)
+    version = models.CharField(max_length=10)
 
     def get_space_replaced_name(self):
         return self.name.replace(u" ", u"__space__")
@@ -355,7 +357,6 @@ class SkinningConfig(SingletonModel):
 
 
 
-
 class PinnedCustomField(TimeStampedModel):
     TEXT = "text"
     TEXTAREA = "textarea"
@@ -395,13 +396,18 @@ class PinnedCustomField(TimeStampedModel):
     field_key = models.CharField(max_length=50,  default="")
     name = models.CharField(max_length=50)
     description = models.CharField(max_length=1024, blank=True, null=True, default="")
-    custom_field_config = models.ForeignKey("cbh_core_model.CustomFieldConfig", related_name='pinned_custom_field')
+    custom_field_config = models.ForeignKey("cbh_core_model.CustomFieldConfig", related_name='pinned_custom_field', default=None, null=True, blank=True)
     required = models.BooleanField(default=False)
     part_of_blinded_key = models.BooleanField(default=False, verbose_name="blind key")
     field_type = models.CharField(default="char", choices=((name, value["name"]) for name, value in FIELD_TYPE_CHOICES.items()), max_length=15, )
     allowed_values = models.CharField(max_length=1024, blank=True, null=True, default="")
     position = models.PositiveSmallIntegerField()
     default = models.CharField(max_length=500, default="", blank=True)
+    
+    pinned_for_datatype = models.ForeignKey(DataType, blank=True, null=True, default=None)
+    standardised_alias = models.ForeignKey("self", related_name="alias_mapped_from", blank=True, null=True, default=None)
+
+
     # data_transformation = models.ForeignKey("cbh_core_model.DataTransformation", 
     #     related_name="pinned_custom_field", 
     #     default=None, blank=True)
