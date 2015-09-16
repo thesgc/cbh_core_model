@@ -166,10 +166,6 @@ class CustomFieldConfig(TimeStampedModel):
     def get_space_replaced_name(self):
         return self.name.replace(u" ", u"__space__")
 
-class DataFormConfigManager(models.Manager):
-    def get_queryset(self):
-        return super(DataFormConfigManager, self).get_queryset().select_related("created_by","l0___created_by", "l0__data_type", "l1___created_by", "l1__data_type", "l2___created_by", "l2__data_type", "l3___created_by", "l3__data_type", "l4___created_by", "l4__data_type")
-
 
 class DataFormConfig(TimeStampedModel):
     '''Shared configuration object - all projects can see this and potentially use it
@@ -203,7 +199,6 @@ class DataFormConfig(TimeStampedModel):
         blank=True, 
         default=None,
         help_text="The fifth level in the hierarchy of the form you are trying to create. For example, if curating industries, companies,  employees , teams and departments, l4 would be employees.")
-    objects = DataFormConfigManager()
 
     def __unicode__(self):
         string = ""
@@ -270,8 +265,10 @@ class DataFormConfig(TimeStampedModel):
             defaults["defaults"] = {"created_by_id" : request.user.id,
                                     "human_added" : False}
             new_object, created = DataFormConfig.objects.get_or_create(**defaults)
-            obj.parent_id = new_object.id
-            obj.save()
+            if not obj.parent_id:
+                obj.parent_id = new_object.id
+                obj.save()
+#             
 
             permitted_child_array = tree_builder.get("%s/%d"  % (uri_stub, new_object.id), [])
             permitted_child_array.append(obj)
@@ -367,7 +364,9 @@ class PinnedCustomField(TimeStampedModel):
     UISELECTTAG  = "uiselecttag"
     UISELECTTAGS = "uiselecttags"
     CHECKBOXES = "checkboxes"
-    PERCENTAGE = "percentage"
+    PERCENTAGE = "percentage",
+    DECIMAL = "decimal"
+
     DATE = "date"
     IMAGE = "imghref"
     LINK = "href"
@@ -390,11 +389,12 @@ class PinnedCustomField(TimeStampedModel):
                            ( DATE,  {"name": "Date Field" , "data":{"icon":"<span class ='glyphicon glyphicon-calendar'></span>","type": "string",   "format": "date"}}),
                            ( LINK , {"name" : "Link to server or external", "data": { "format": "href", "type": "string" ,"icon":"<span class ='glyphicon glyphicon glyphicon-new-window'></span>" }}),
                            ( IMAGE , {"name" : "Image link to embed", "data": {"format": "imghref", "type": "string" ,"icon":"<span class ='glyphicon glyphicon glyphicon-picture'></span>" }}),
+                            (DECIMAL ,{"name" :"Decimal field", "data": { "icon":"<span class ='glyphicon'>3.1</span>", "type": "number"}}) 
                         ))
 
 
-    field_key = models.CharField(max_length=50,  default="")
-    name = models.CharField(max_length=50)
+    field_key = models.CharField(max_length=500,  default="")
+    name = models.CharField(max_length=100)
     description = models.CharField(max_length=1024, blank=True, null=True, default="")
     custom_field_config = models.ForeignKey("cbh_core_model.CustomFieldConfig", related_name='pinned_custom_field', default=None, null=True, blank=True)
     required = models.BooleanField(default=False)
