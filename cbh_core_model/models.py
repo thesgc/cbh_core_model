@@ -149,22 +149,19 @@ class DataType(TimeStampedModel):
         return self.name
 
 
+
 class CustomFieldConfig(TimeStampedModel):
     name = models.CharField(unique=True, max_length=100)
     created_by = models.ForeignKey("auth.User")
     schemaform = models.TextField(default = "", null=True, blank=True, )
     data_type = models.ForeignKey(DataType, null=True, blank=True, default=None)
-
     def __unicode__(self):
-        dt_name = ""
-        try:
-            dt_name = self.data_type.name
-        except AttributeError:
-            pass
-        return "%s: %s" % (dt_name, self.name)
+        return self.name
 
     def get_space_replaced_name(self):
         return self.name.replace(u" ", u"__space__")
+
+
 
 
 class DataFormConfig(TimeStampedModel):
@@ -371,6 +368,19 @@ class PinnedCustomField(TimeStampedModel):
     IMAGE = "imghref"
     LINK = "href"
 
+    def pandas_converter(self, field_length, pandas_dtype):
+        dtype = str(pandas_dtype)
+        if dtype == "int64":
+            return self.INTEGER
+        if dtype == "float64":
+            return self.NUMBER
+        if dtype == "object":
+            if field_length > 100:
+                return self.TEXTAREA
+            else:
+                return self.TEXT
+        return None
+
 
     FIELD_TYPE_CHOICES = OrderedDict((
                            ( TEXT , {"name" : "Short text field", "data": { "type": "string" ,"icon":"<span class ='glyphicon glyphicon-font'></span>" }}),
@@ -406,6 +416,7 @@ class PinnedCustomField(TimeStampedModel):
     
     pinned_for_datatype = models.ForeignKey(DataType, blank=True, null=True, default=None)
     standardised_alias = models.ForeignKey("self", related_name="alias_mapped_from", blank=True, null=True, default=None)
+    attachment_field_mapped_to = models.ForeignKey("self", related_name="attachment_field_mapped_from", blank=True, null=True, default=None)
 
 
     # data_transformation = models.ForeignKey("cbh_core_model.DataTransformation", 
@@ -440,7 +451,7 @@ class PinnedCustomField(TimeStampedModel):
         return self.name.replace(u" ", u"__space__")
 
     def __unicode__(self):
-        return "%s  %s  %s" % (self.pinned_for_datatype,self.name, self.field_type)
+        return "%s  %s  %s" % (self.name, self.field_key,  self.field_type)
 
 
 
