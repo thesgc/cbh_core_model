@@ -149,12 +149,19 @@ class DataType(TimeStampedModel):
         return self.name
 
 
+# class CustomFieldConfigManager(models.Manager):
+#     def get_queryset(self):
+#         return super(CustomFieldConfigManager, self).get_queryset().select_related("data_type").prefetch_related("pinned_custom_field__standardised_alias").select_related("pinned_custom_field__pinned_for_datatype")
+
+
+
 
 class CustomFieldConfig(TimeStampedModel):
     name = models.CharField(unique=True, max_length=500)
     created_by = models.ForeignKey("auth.User")
     schemaform = models.TextField(default = "", null=True, blank=True, )
     data_type = models.ForeignKey(DataType, null=True, blank=True, default=None)
+    #objects = CustomFieldConfigManager()
     def __unicode__(self):
         return self.name
 
@@ -351,7 +358,6 @@ class SkinningConfig(SingletonModel):
 
 
 
-
 class PinnedCustomField(TimeStampedModel):
     TEXT = "text"
     TEXTAREA = "textarea"
@@ -379,7 +385,7 @@ class PinnedCustomField(TimeStampedModel):
                 return self.TEXTAREA
             else:
                 return self.TEXT
-        return None
+        return self.TEXT
 
 
     FIELD_TYPE_CHOICES = OrderedDict((
