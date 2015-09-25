@@ -138,7 +138,7 @@ class ProjectType(TimeStampedModel):
 
 
 class DataType(TimeStampedModel):
-    name = models.CharField(unique=True, max_length=100)
+    name = models.CharField(unique=True, max_length=500)
     uri = models.CharField(max_length=1000, default="")
     version = models.CharField(max_length=10, default="")
 
@@ -151,7 +151,7 @@ class DataType(TimeStampedModel):
 
 
 class CustomFieldConfig(TimeStampedModel):
-    name = models.CharField(unique=True, max_length=100)
+    name = models.CharField(unique=True, max_length=500)
     created_by = models.ForeignKey("auth.User")
     schemaform = models.TextField(default = "", null=True, blank=True, )
     data_type = models.ForeignKey(DataType, null=True, blank=True, default=None)
@@ -404,7 +404,7 @@ class PinnedCustomField(TimeStampedModel):
 
 
     field_key = models.CharField(max_length=500,  default="")
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=500)
     description = models.CharField(max_length=1024, blank=True, null=True, default="")
     custom_field_config = models.ForeignKey("cbh_core_model.CustomFieldConfig", related_name='pinned_custom_field', default=None, null=True, blank=True)
     required = models.BooleanField(default=False)
