@@ -11,6 +11,8 @@ from django.db.models.fields import NOT_PROVIDED
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.template.defaultfilters import slugify
 from collections import OrderedDict
+from django.utils.functional import cached_property
+from copy import copy
 
 def get_all_hstore_values(table,column, key, is_list=False, extra_where=" True"):
     '''Using an hstore query from the reference here
@@ -149,11 +151,6 @@ class DataType(TimeStampedModel):
         return self.name
 
 
-# class CustomFieldConfigManager(models.Manager):
-#     def get_queryset(self):
-#         return super(CustomFieldConfigManager, self).get_queryset().select_related("data_type").prefetch_related("pinned_custom_field__standardised_alias").select_related("pinned_custom_field__pinned_for_datatype")
-
-
 
 
 class CustomFieldConfig(TimeStampedModel):
@@ -236,14 +233,6 @@ class DataFormConfig(TimeStampedModel):
         if  self.l0_id is not None:
             return  "l0"
         return last_level
-
-    # def natural_key(self):
-    #     keys = []
-    #     for level in ["l1", "l2", "l3", "l4", "l0"]:
-    #         if getattr(self, level):
-    #             str(keys.append(getattr(self, level)))
-    #     return "_".join(keys)
-
 
 
     def get_all_ancestor_objects(obj, request, tree_builder={}, uri_stub=""):
@@ -358,6 +347,16 @@ class SkinningConfig(SingletonModel):
 
 
 
+
+
+
+
+
+
+
+
+
+
 class PinnedCustomField(TimeStampedModel):
     TEXT = "text"
     TEXTAREA = "textarea"
@@ -367,8 +366,9 @@ class PinnedCustomField(TimeStampedModel):
     UISELECTTAG  = "uiselecttag"
     UISELECTTAGS = "uiselecttags"
     CHECKBOXES = "checkboxes"
-    PERCENTAGE = "percentage",
+    PERCENTAGE = "percentage"
     DECIMAL = "decimal"
+    BOOLEAN = "boolean"
 
     DATE = "date"
     IMAGE = "imghref"
@@ -405,7 +405,11 @@ class PinnedCustomField(TimeStampedModel):
                            ( DATE,  {"name": "Date Field" , "data":{"icon":"<span class ='glyphicon glyphicon-calendar'></span>","type": "string",   "format": "date"}}),
                            ( LINK , {"name" : "Link to server or external", "data": { "format": "href", "type": "string" ,"icon":"<span class ='glyphicon glyphicon glyphicon-new-window'></span>" }}),
                            ( IMAGE , {"name" : "Image link to embed", "data": {"format": "imghref", "type": "string" ,"icon":"<span class ='glyphicon glyphicon glyphicon-picture'></span>" }}),
-                            (DECIMAL ,{"name" :"Decimal field", "data": { "icon":"<span class ='glyphicon'>3.1</span>", "type": "number"}}) 
+                            (DECIMAL ,{"name" :"Decimal field", "data": { "icon":"<span class ='glyphicon'>3.1</span>", "type": "number"}}) ,
+                            (BOOLEAN, {"name": "checkbox", "data":{ "icon":"<span class ='glyphicon'>3.1</span>", "type": "boolean"}}),
+                            ("related", {"name": "TEST", "data":{ "icon":"<span class ='glyphicon'>3.1</span>", "type": "string"}})
+
+
                         ))
 
 
@@ -440,6 +444,7 @@ class PinnedCustomField(TimeStampedModel):
             extra_where="cbh_core_model_project.project_key ='%s'" % projectKey)
         return  [item for item in db_items]
 
+
     def get_allowed_items(self,projectKey):
         items = [item.strip() for item in self.allowed_values.split(",") if item.strip()]
         setitems = sorted(list(set(items + self.get_dropdown_list(projectKey))))
@@ -447,19 +452,66 @@ class PinnedCustomField(TimeStampedModel):
         searchdata = [{"label" : "[%s] %s" % (self.name ,item.strip()), "value" : "%s|%s" % (self.name ,item.strip())} for item in setitems if item] 
         return (testdata, searchdata)
 
+    @cached_property
     def get_items_simple(self):
         items = [item.strip() for item in self.allowed_values.split(",") if item.strip()]
         setitems = sorted(list(set(items)))
         testdata = [{"label" : item.strip(), "value": item.strip()} for item in setitems if item]
         return testdata
 
+    @cached_property
     def get_space_replaced_name(self):
         return self.name.replace(u" ", u"__space__")
 
     def __unicode__(self):
         return "%s  %s  %s" % (self.name, self.field_key,  self.field_type)
 
+    @cached_property
+    def field_values(obj):
+        data =  copy(obj.FIELD_TYPE_CHOICES[obj.field_type]["data"])
 
+        data["title"] = obj.name
+        data["placeholder"] = obj.description
+        form = {}
+        form["position"] = obj.position
+        form["key"] = obj.get_space_replaced_name
+        form["title"] = obj.name
+        form["description"] = obj.description
+        form["disableSuccessState"] = True
+        form["feedback"] = False
+        # form["allowed_values"] = obj.allowed_values
+        # form["part_of_blinded_key"] = obj.part_of_blinded_key
+        searchitems = []
+        data['default'] = obj.default
+        if data["type"] == "array":
+            data['default'] = obj.default.split(",")
+        if obj.UISELECT in data.get("format", ""):
+            
+            form["placeholder"] = "Choose..."
+            form["help"] = obj.description
+            data['items'] = obj.get_items_simple
+            
+
+
+        if data.get("format", False) == obj.DATE:
+            maxdate = time.strftime("%Y-%m-%d")
+            form.update( {
+                "minDate": "2000-01-01",
+                "maxDate": maxdate,
+                'type': 'datepicker',
+                "format": "yyyy-mm-dd",
+                'pickadate': {
+                  'selectYears': True, 
+                  'selectMonths': True,
+                },
+            })
+
+        else:
+            for item in ["options"]:
+                stuff = data.pop(item, None)
+                if stuff:
+                    form[item] = stuff
+        return (data, form)
 
 
     class Meta:
