@@ -7,7 +7,8 @@ from django.db import models, migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('cbh_core_model', '0021_pinnedcustomfield_attachment_field_mapped_to'),
+        ('cbh_core_model',
+         '0021_pinnedcustomfield_attachment_field_mapped_to'),
     ]
 
     operations = [

@@ -14,19 +14,22 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='projecttype',
             name='level_0',
-            field=models.ForeignKey(related_name='level_0', default=None, blank=True, to='cbh_core_model.CustomFieldConfig', null=True),
+            field=models.ForeignKey(related_name='level_0', default=None,
+                                    blank=True, to='cbh_core_model.CustomFieldConfig', null=True),
             preserve_default=True,
         ),
         migrations.AddField(
             model_name='projecttype',
             name='level_1',
-            field=models.ForeignKey(related_name='level_1', default=None, blank=True, to='cbh_core_model.CustomFieldConfig', null=True),
+            field=models.ForeignKey(related_name='level_1', default=None,
+                                    blank=True, to='cbh_core_model.CustomFieldConfig', null=True),
             preserve_default=True,
         ),
         migrations.AddField(
             model_name='projecttype',
             name='level_2',
-            field=models.ForeignKey(related_name='level_2', default=None, blank=True, to='cbh_core_model.CustomFieldConfig', null=True),
+            field=models.ForeignKey(related_name='level_2', default=None,
+                                    blank=True, to='cbh_core_model.CustomFieldConfig', null=True),
             preserve_default=True,
         ),
     ]

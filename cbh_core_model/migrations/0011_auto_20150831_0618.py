@@ -20,7 +20,8 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='project',
             name='name',
-            field=models.CharField(default=None, max_length=100, null=True, db_index=True, blank=True),
+            field=models.CharField(
+                default=None, max_length=100, null=True, db_index=True, blank=True),
             preserve_default=True,
         ),
     ]

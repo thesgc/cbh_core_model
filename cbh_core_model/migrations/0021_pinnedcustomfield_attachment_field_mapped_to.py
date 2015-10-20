@@ -14,7 +14,8 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='pinnedcustomfield',
             name='attachment_field_mapped_to',
-            field=models.ForeignKey(related_name='attachment_field_mapped_from', default=None, blank=True, to='cbh_core_model.PinnedCustomField', null=True),
+            field=models.ForeignKey(related_name='attachment_field_mapped_from',
+                                    default=None, blank=True, to='cbh_core_model.PinnedCustomField', null=True),
             preserve_default=True,
         ),
     ]
