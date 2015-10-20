@@ -6,10 +6,6 @@ from django_extensions.db.models import TimeStampedModel
 from django.db.models.signals import post_save
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth.models import Permission, User, Group
-from django.db.models import Avg, Max, Min, Count
-from django.db.models.fields import NOT_PROVIDED
-from django.core.exceptions import ValidationError, ObjectDoesNotExist
-from django.template.defaultfilters import slugify
 from collections import OrderedDict
 from django.utils.functional import cached_property
 from copy import copy
