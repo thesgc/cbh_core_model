@@ -249,6 +249,7 @@ class DataFormConfig(TimeStampedModel):
                 **defaults)
             if not obj.parent_id:
                 obj.parent_id = new_object.id
+                print obj.parent_id
                 obj.save()
 #
 
