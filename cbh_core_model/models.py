@@ -10,6 +10,7 @@ from collections import OrderedDict
 from django.utils.functional import cached_property
 from copy import copy
 import json
+import dateutil
 
 def get_all_hstore_values(table, column, key, is_list=False, extra_where=" True"):
     '''Using an hstore query from the reference here
@@ -328,6 +329,45 @@ class SkinningConfig(SingletonModel):
 #     def __unicode__(self):
 #         return "%s - %s" % (self.name, self.uri)
 
+def test_string(value):
+    return True
+
+def test_bool(value):
+    return False
+
+
+
+def test_int(value):
+    try:
+        floatval = float(value)
+        intval = int(value)
+        if intval == floatval and "." not in unicode(value):
+            return True
+    except  ValueError:
+        return False
+
+def test_number(value):
+    try:
+        floatval = float(value)
+        return True
+    except  ValueError:
+        return False
+
+
+def test_stringdate(value):
+    try:
+        curated_value = dateutil.parser.parse(unicode(value)).strftime("%Y-%m-%d")
+        return curated_value
+    except ValueError:
+        return False
+
+def test_percentage(value):
+    result = test_number(value)
+    if result:
+        if float(val) > 0 and float(val) < 100:
+            return True
+    return False
+
 
 class PinnedCustomField(TimeStampedModel):
     TEXT = "text"
@@ -341,7 +381,6 @@ class PinnedCustomField(TimeStampedModel):
     PERCENTAGE = "percentage"
     DECIMAL = "decimal"
     BOOLEAN = "boolean"
-
     DATE = "date"
     IMAGE = "imghref"
     LINK = "href"
@@ -361,39 +400,39 @@ class PinnedCustomField(TimeStampedModel):
 
     FIELD_TYPE_CHOICES = OrderedDict((
         (TEXT, {"name": "Short text field", "data": {
-         "type": "string", "icon": "<span class ='glyphicon glyphicon-font'></span>"}}),
+         "type": "string", "icon": "<span class ='glyphicon glyphicon-font'></span>"}, "test_datatype" : test_string}
+         ),
         ("char", {
-            "name": "Short text field", "data": {"type": "string"}}),
+            "name": "Short text field", "data": {"type": "string"}, "test_datatype" : test_string}),
         (TEXTAREA, {"name": "Full text", "data": {
-         "icon": "<span class ='glyphicon glyphicon-font'></span>", "type": "string", "format": "textarea"}}),
+         "icon": "<span class ='glyphicon glyphicon-font'></span>", "type": "string", "format": "textarea"}, "test_datatype" : test_string}),
         (UISELECT, {"name": "Choice field", "data": {
-         "type": "string", "format": "uiselect"}}),
+         "type": "string", "format": "uiselect"}, "test_datatype" : test_string}),
         (INTEGER, {"name": "Integer field", "data": {
-         "icon": "<span class ='glyphicon glyphicon-stats'></span>", "type": "integer"}}),
+         "icon": "<span class ='glyphicon glyphicon-stats'></span>", "type": "integer"}, "test_datatype" : test_int}),
         (NUMBER, {"name": "Decimal field", "data": {
-         "icon": "<span class ='glyphicon glyphicon-sound-5-1'></span>", "type": "number"}}),
+         "icon": "<span class ='glyphicon glyphicon-sound-5-1'></span>", "type": "number"}, "test_datatype": test_number}),
         (UISELECTTAG, {"name": "Choice allowing create", "data":  {
-         "icon": "<span class ='glyphicon glyphicon-tag'></span>", "type": "string", "format": "uiselect"}}),
+         "icon": "<span class ='glyphicon glyphicon-tag'></span>", "type": "string", "format": "uiselect"}, "test_datatype" : test_string}),
         (UISELECTTAGS, {"name": "Tags field allowing create", "data": {"icon": "<span class ='glyphicon glyphicon-tags'></span>", "type": "array", "format": "uiselect", "options": {
             "tagging": "tagFunction",
             "taggingLabel": "(adding new)",
             "taggingTokens": "",
-        }}}),
+        }}, "test_datatype" : test_string}),
         (PERCENTAGE, {"name": "Percentage field", "data": {
-         "icon": "<span class ='glyphicon'>%</span>", "type": "number", "maximum": 100.0, "minimum": 0.1}}),
+         "icon": "<span class ='glyphicon'>%</span>", "type": "number", "maximum": 100.0, "minimum": 0.1}, "test_datatype": test_percentage}),
         (DATE,  {"name": "Date Field", "data": {
-         "icon": "<span class ='glyphicon glyphicon-calendar'></span>", "type": "string",   "format": "date"}}),
+         "icon": "<span class ='glyphicon glyphicon-calendar'></span>", "type": "string",   "format": "date"}, "test_datatype": test_stringdate}),
         (LINK, {"name": "Link to server or external", "data": {"format": "href", "type":
-                                                               "string", "icon": "<span class ='glyphicon glyphicon glyphicon-new-window'></span>"}}),
+                                                               "string", "icon": "<span class ='glyphicon glyphicon glyphicon-new-window'></span>"}, "test_datatype" : test_string}),
         (IMAGE, {"name": "Image link to embed", "data": {"format": "imghref", "type":
-                                                         "string", "icon": "<span class ='glyphicon glyphicon glyphicon-picture'></span>"}}),
+                                                         "string", "icon": "<span class ='glyphicon glyphicon glyphicon-picture'></span>"},  "test_datatype" : test_string}),
         (DECIMAL, {"name": "Decimal field", "data": {
-         "icon": "<span class ='glyphicon'>3.1</span>", "type": "number"}}),
+         "icon": "<span class ='glyphicon'>3.1</span>", "type": "number"},  "test_datatype" : test_number}),
         (BOOLEAN, {"name": "checkbox", "data": {
-         "icon": "<span class ='glyphicon'>3.1</span>", "type": "boolean"}}),
+         "icon": "<span class ='glyphicon'>3.1</span>", "type": "boolean"},"test_datatype" : test_bool }),
         ("related", {"name": "TEST", "data": {
-         "icon": "<span class ='glyphicon'>3.1</span>", "type": "string"}})
-
+         "icon": "<span class ='glyphicon'>3.1</span>", "type": "string"}, "test_datatype" : test_string})
 
     ))
 
