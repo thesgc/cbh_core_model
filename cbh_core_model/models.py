@@ -459,6 +459,13 @@ class PinnedCustomField(TimeStampedModel):
     attachment_field_mapped_to = models.ForeignKey(
         "self", related_name="attachment_field_mapped_from", blank=True, null=True, default=None)
 
+    def validate_field(self, value):
+        if not value and self.required:
+            return False
+        else:
+            func = self.FIELD_TYPE_CHOICES[self.field_type]["test_datatype"]
+            return func(value)
+
     # data_transformation = models.ForeignKey("cbh_core_model.DataTransformation",
     #     related_name="pinned_custom_field",
     #     default=None, blank=True)
