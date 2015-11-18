@@ -11,7 +11,7 @@ from django.utils.functional import cached_property
 from copy import copy
 import json
 import dateutil
-from time import time
+import time
 
 def get_all_hstore_values(table, column, key, is_list=False, extra_where=" True"):
     '''Using an hstore query from the reference here
