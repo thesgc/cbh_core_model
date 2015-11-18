@@ -11,6 +11,7 @@ from django.utils.functional import cached_property
 from copy import copy
 import json
 import dateutil
+from time import time
 
 def get_all_hstore_values(table, column, key, is_list=False, extra_where=" True"):
     '''Using an hstore query from the reference here
@@ -415,9 +416,9 @@ class PinnedCustomField(TimeStampedModel):
         (UISELECTTAG, {"name": "Choice allowing create", "data":  {
          "icon": "<span class ='glyphicon glyphicon-tag'></span>", "type": "string", "format": "uiselect", "options":{}}, "test_datatype" : test_string}),
         (UISELECTTAGS, {"name": "Tags field allowing create", "data": {"icon": "<span class ='glyphicon glyphicon-tags'></span>", "type": "array", "format": "uiselect", "options": {
-            # "tagging": "tagFunction",
-            # "taggingLabel": "(adding new)",
-            # "taggingTokens": "",
+            "tagging": "tagFunction",
+            "taggingLabel": "(adding new)",
+            "taggingTokens": "",
             'refreshDelay': 0
         }}, "test_datatype" : test_string}),
         (PERCENTAGE, {"name": "Percentage field", "data": {
@@ -525,7 +526,7 @@ class PinnedCustomField(TimeStampedModel):
         # form["allowed_values"] = obj.allowed_values
         # form["part_of_blinded_key"] = obj.part_of_blinded_key
         searchitems = []
-        data['default'] = obj.default
+        
         if data["type"] == "array":
             data['default'] = obj.default.split(",")
         if obj.UISELECT in data.get("format", ""):
@@ -533,7 +534,13 @@ class PinnedCustomField(TimeStampedModel):
             form["placeholder"] = "Choose..."
             form["help"] = obj.description
             data['items'] = obj.get_items_simple
+            form['permanent_items'] = obj.get_items_simple
 
+        if obj.default:
+            data['default'] = obj.default
+        if obj.UISELECTTAGS == obj.field_type:
+            #set default to empty array or CSV from default field
+            data["default"] = []
 
 
         if data.get("format", False) == obj.DATE:
