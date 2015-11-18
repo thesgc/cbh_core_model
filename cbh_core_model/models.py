@@ -418,8 +418,8 @@ class PinnedCustomField(TimeStampedModel):
         (UISELECTTAGS, {"name": "Tags field allowing create", "data": {"icon": "<span class ='glyphicon glyphicon-tags'></span>", "type": "array", "format": "uiselect", "options": {
             "tagging": "tagFunction",
             "taggingLabel": "(adding new)",
-            "taggingTokens": "",
-            'refreshDelay': 0
+            "taggingTokens": "ENTER",
+            'refreshDelay': 10
         }}, "test_datatype" : test_string}),
         (PERCENTAGE, {"name": "Percentage field", "data": {
          "icon": "<span class ='glyphicon'>%</span>", "type": "number", "maximum": 100.0, "minimum": 0.1}, "test_datatype": test_percentage}),
@@ -520,6 +520,7 @@ class PinnedCustomField(TimeStampedModel):
         form["position"] = obj.position
         form["key"] = obj.get_space_replaced_name
         form["title"] = obj.name
+
         form["description"] = obj.description
         form["disableSuccessState"] = True
         form["feedback"] = False
@@ -538,6 +539,9 @@ class PinnedCustomField(TimeStampedModel):
 
         if obj.default:
             data['default'] = obj.default
+        if obj.UISELECTTAGS == obj.field_type:
+            form["description"] = "Hit enter twice to add a new item."
+
         if obj.UISELECTTAGS == obj.field_type:
             #set default to empty array or CSV from default field
             data["default"] = []
