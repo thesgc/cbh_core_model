@@ -413,11 +413,12 @@ class PinnedCustomField(TimeStampedModel):
         (NUMBER, {"name": "Decimal field", "data": {
          "icon": "<span class ='glyphicon glyphicon-sound-5-1'></span>", "type": "number"}, "test_datatype": test_number}),
         (UISELECTTAG, {"name": "Choice allowing create", "data":  {
-         "icon": "<span class ='glyphicon glyphicon-tag'></span>", "type": "string", "format": "uiselect"}, "test_datatype" : test_string}),
+         "icon": "<span class ='glyphicon glyphicon-tag'></span>", "type": "string", "format": "uiselect", "options":{}}, "test_datatype" : test_string}),
         (UISELECTTAGS, {"name": "Tags field allowing create", "data": {"icon": "<span class ='glyphicon glyphicon-tags'></span>", "type": "array", "format": "uiselect", "options": {
-            "tagging": "tagFunction",
-            "taggingLabel": "(adding new)",
-            "taggingTokens": "",
+            # "tagging": "tagFunction",
+            # "taggingLabel": "(adding new)",
+            # "taggingTokens": "",
+            'refreshDelay': 0
         }}, "test_datatype" : test_string}),
         (PERCENTAGE, {"name": "Percentage field", "data": {
          "icon": "<span class ='glyphicon'>%</span>", "type": "number", "maximum": 100.0, "minimum": 0.1}, "test_datatype": test_percentage}),
@@ -532,6 +533,8 @@ class PinnedCustomField(TimeStampedModel):
             form["placeholder"] = "Choose..."
             form["help"] = obj.description
             data['items'] = obj.get_items_simple
+
+
 
         if data.get("format", False) == obj.DATE:
             maxdate = time.strftime("%Y-%m-%d")
