@@ -540,7 +540,7 @@ class PinnedCustomField(TimeStampedModel):
         if obj.default:
             data['default'] = obj.default
         if obj.UISELECTTAGS == obj.field_type:
-            form["description"] = "Hit enter twice to add a new item."
+            form["description"] = "Hit enter twice to add a new item or search existing items in the dropdown."
 
         if obj.UISELECTTAGS == obj.field_type:
             #set default to empty array or CSV from default field
