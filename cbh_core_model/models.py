@@ -279,7 +279,7 @@ class Project(TimeStampedModel, ProjectPermissionMixin):
     project_type = models.ForeignKey(
         ProjectType, null=True, blank=True, default=None)
     is_default = models.BooleanField(default=False)
-    enabled_forms = models.ManyToManyField(DataFormConfig)
+    enabled_forms = models.ManyToManyField(DataFormConfig, blank=True)
 
     class Meta:
         get_latest_by = 'created'
