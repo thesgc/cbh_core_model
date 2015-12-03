@@ -570,3 +570,14 @@ class PinnedCustomField(TimeStampedModel):
     class Meta:
         ordering = ['position']
         get_latest_by = 'created'
+
+
+class Invitation(TimeStampedModel):
+    email = models.CharField(unique=True, max_length=100)
+    created_by = models.ForeignKey("auth.User")
+    first_name = models.TextField(default="", null=True, blank=True, )
+    last_name = models.TextField(default="", null=True, blank=True, )
+    projects = models.ManyToManyField("cbh_core_model.Project", blank=True)
+
+    def __unicode__(self):
+        return self.name
