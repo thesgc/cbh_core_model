@@ -573,7 +573,7 @@ class PinnedCustomField(TimeStampedModel):
 
 
 class Invitation(TimeStampedModel):
-    email = models.CharField(unique=True, max_length=100)
+    email = models.CharField(max_length=100)
     created_by = models.ForeignKey("auth.User")
     first_name = models.TextField(default="", null=True, blank=True, )
     last_name = models.TextField(default="", null=True, blank=True, )
