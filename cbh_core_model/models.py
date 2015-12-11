@@ -312,7 +312,10 @@ class SkinningConfig(SingletonModel):
         max_length=50, null=True, blank=False, default='project')
     result_alias = models.CharField(
         max_length=50, null=True, blank=False, default='result')
-
+    file_errors_from_backend = models.NullBooleanField(default=False)
+    enable_smiles_input = models.NullBooleanField(default=True)
+    data_manager_email = models.CharField(max_length=100, default="")
+    data_manager_name = models.CharField(max_length=100, default="")
     def __unicode__(self):
         return u"Skinning Configuration"
 
