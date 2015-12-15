@@ -38,9 +38,46 @@ def get_all_hstore_values(table, column, key, is_list=False, extra_where=" True"
             items.append(d)
     return items
 
-PROJECT_PERMISSIONS = (("viewer", "Can View"),
-                       ("editor", "Can edit or add batches"),
-                       ("admin", "Can assign permissions"))
+OPEN = "open"
+RESTRICTED = "restricted"
+
+RESTRICTION_CHOICES = ((OPEN, "Open to all viewers"),
+                        (RESTRICTED, "Restricted to editors"))
+
+
+#Assume that these are declared in order of increasing permission
+PROJECT_PERMISSIONS = (("viewer", "Can View", {"linked_field_permission": RESTRICTED}),
+                       ("editor", "Can edit or add batches",  {"linked_field_permission": OPEN}),
+                       ("admin", "Can assign permissions",  {"linked_field_permission": OPEN}))
+
+
+
+def get_all_project_ids_for_user_perms(perms, possible_perm_levels):
+    pids = []
+    for perm in perms:
+        prms = str(perm).split(".")
+        pid = prms[0]
+        if pid[0].isdigit() and prms[1] in possible_perm_levels:
+            pids.append(int(pid))
+    return pids
+
+def get_all_project_ids_for_user(user, possible_perm_levels):
+    return get_all_project_ids_for_user_perms(user.get_all_permissions(), possible_perm_levels)
+
+
+
+def get_projects_where_fields_restricted(user):
+    """Iterate through the permission choices available and assign a dictionary for this user of the index that should
+    be used for each permission. 
+    This is implemented in this way to allow the roles to be decopupled from the index that the user views"""
+    indexes_dict = { OPEN : set(), RESTRICTED :set()}
+    for perm in PROJECT_PERMISSIONS:
+        for pid in get_all_project_ids_for_user(user, [perm[0]]):
+            indexes_dict[perm[2]["linked_field_permission"]].add(pid)
+    #Poen permission trump restricted ones
+    indexes_dict[RESTRICTED] = indexes_dict[RESTRICTED] - indexes_dict[OPEN]
+    return indexes_dict
+
 
 
 class ProjectPermissionManager(models.Manager):
@@ -116,6 +153,8 @@ class ProjectPermissionMixin(models.Model):
 
     def make_admin(self, group_or_user):
         self._add_instance_permissions_to_user_or_group(group_or_user, "admin")
+
+
 
     class Meta:
 
@@ -373,6 +412,8 @@ def test_percentage(value):
     return False
 
 
+
+
 class PinnedCustomField(TimeStampedModel):
     TEXT = "text"
     TEXTAREA = "textarea"
@@ -388,6 +429,7 @@ class PinnedCustomField(TimeStampedModel):
     DATE = "date"
     IMAGE = "imghref"
     LINK = "href"
+
 
     def pandas_converter(self, field_length, pandas_dtype):
         dtype = str(pandas_dtype)
@@ -463,6 +505,7 @@ class PinnedCustomField(TimeStampedModel):
         "self", related_name="alias_mapped_from", blank=True, null=True, default=None)
     attachment_field_mapped_to = models.ForeignKey(
         "self", related_name="attachment_field_mapped_from", blank=True, null=True, default=None)
+    open_or_restricted = models.CharField(max_length=20, default=OPEN, choices=RESTRICTION_CHOICES)
 
     def validate_field(self, value):
         if not value and self.required:
