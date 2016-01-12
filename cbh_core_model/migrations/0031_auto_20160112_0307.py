@@ -9,7 +9,9 @@ from django.db import models, migrations
 def migrate_old_permissions_to_new_ones(apps, schema_editor):
     """Idempotent function to migrate the old permissions to the new ones. Old custom contentypes are not deleted for now
     This will allow the app to be migrated to django 1.9 and keeps the permissions system in line with django's meaning 
-    functions such as administrator work fine"""
+    functions such as user.is_administrator dontate all permissions to the user properly
+
+    """
 
     Permission = apps.get_model("auth", "Permission")
     Project = apps.get_model("cbh_core_model", "Project")
