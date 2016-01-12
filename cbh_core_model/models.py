@@ -452,6 +452,8 @@ class PinnedCustomField(TimeStampedModel):
             "name": "Short text field", "data": {"type": "string"}, "test_datatype" : test_string}),
         (TEXTAREA, {"name": "Full text", "data": {
          "icon": "<span class ='glyphicon glyphicon-font'></span>", "type": "string", "format": "textarea"}, "test_datatype" : test_string}),
+        (TEXTAREA, {"name": "Full text", "data": {
+         "icon": "<span class ='glyphicon glyphicon-font'></span>", "type": "string", "format": "ckeditor", "ckeditor":{ 'width' : '300px'},}, "test_datatype" : test_string}),
         (UISELECT, {"name": "Choice field", "data": {
          "type": "string", "format": "uiselect"}, "test_datatype" : test_string}),
         (INTEGER, {"name": "Integer field", "data": {
