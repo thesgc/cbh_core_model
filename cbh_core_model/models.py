@@ -12,58 +12,55 @@ from copy import copy
 import json
 import dateutil
 import time
+import django
 
-def get_all_hstore_values(table, column, key, is_list=False, extra_where=" True"):
-    '''Using an hstore query from the reference here
-    http://www.youlikeprogramming.com/2012/06/mastering-the-postgresql-hstore-date-type/
-    where project_id = {{project_id}}
-    '''
-    cursor = connection.cursor()
-    sql = u"SELECT DISTINCT {column} -> '{key}' FROM {table} where {column} -> '{key}' != '' and {extra_where};".format(
-        **{"table": unicode(table), "key": unicode(key), "column": unicode(column),  "extra_where": unicode(extra_where)})
-    cursor.execute(sql)
-    mytuple = cursor.fetchall()
-    items = []
-    data = [d[0] for d in mytuple]
-    for d in data:
-        if is_list:
-            try:
-                for elem in json.loads(d):
-                    items.append(elem)
-            except ValueError:
-                items.append(d)
-            except TypeError:
-                items.append(d)
-        else:
-            items.append(d)
-    return items
-
+PERMISSION_CODENAME_SEPARATOR = "__"
 OPEN = "open"
 RESTRICTED = "restricted"
-
 RESTRICTION_CHOICES = ((OPEN, "Open to all viewers"),
                         (RESTRICTED, "Restricted to editors"))
-
-
 #Assume that these are declared in order of increasing permission
 PROJECT_PERMISSIONS = (("viewer", "Can View", {"linked_field_permission": RESTRICTED}),
                        ("editor", "Can edit or add batches",  {"linked_field_permission": OPEN}),
-                       ("admin", "Can assign permissions",  {"linked_field_permission": OPEN}))
+                       ("owner", "Can assign permissions",  {"linked_field_permission": OPEN}))
 
 
 
 def get_all_project_ids_for_user_perms(perms, possible_perm_levels):
+    """New implementation of permissions by project - the contenttype is left now as project and 
+    the permission codename contains all information about the permission"""
+    pids = []
+    for perm in perms:
+        proj_role = str(perm).split(".")[1]
+        if PERMISSION_CODENAME_SEPARATOR in proj_role:
+            prms = proj_role.split(PERMISSION_CODENAME_SEPARATOR)
+            pid = prms[0]
+            if pid[0].isdigit() and prms[1] in possible_perm_levels:
+                pids.append(int(pid))
+    return list(set(pids))
+
+
+def get_old_project_ids_for_user_perms(perms, possible_perm_levels):
     pids = []
     for perm in perms:
         prms = str(perm).split(".")
+        
         pid = prms[0]
         if pid[0].isdigit() and prms[1] in possible_perm_levels:
             pids.append(int(pid))
     return pids
 
+
+def get_old_all_project_ids_for_user(user, possible_perm_levels):
+    return get_old_project_ids_for_user_perms(user.get_all_permissions(), possible_perm_levels)
+
+def get_old_all_project_ids_for_user(user, possible_perm_levels):
+    return get_old_project_ids_for_user_perms(user.get_all_permissions(), possible_perm_levels)
+
+
+
 def get_all_project_ids_for_user(user, possible_perm_levels):
     return get_all_project_ids_for_user_perms(user.get_all_permissions(), possible_perm_levels)
-
 
 
 def get_projects_where_fields_restricted(user):
@@ -79,22 +76,18 @@ def get_projects_where_fields_restricted(user):
     return indexes_dict
 
 
-
 class ProjectPermissionManager(models.Manager):
 
     def sync_all_permissions(self):
-        for perm in self.all():
-            perm.sync_permissions()
+        for proj in self.all():
+            proj.sync_permissions()
 
-    def get_user_permission(self, project_id, user, codenames, perms=None):
-        '''Check the given users' permissions against a list of codenames for a project id'''
-        if not perms:
-            perms = user.get_all_permissions()
-        codes = ["%d.%s" % (project_id, codename) for codename in codenames]
-        matched = list(perms.intersection(codes))
-        if len(matched) > 0:
-            return True
-        return False
+
+def get_permission_name(name, permission):
+    return "%s%s%s" % (name, PERMISSION_CODENAME_SEPARATOR, permission)
+
+def get_permission_codename(id, permission):
+    return "%d%s%s" % (id, PERMISSION_CODENAME_SEPARATOR, permission)
 
 
 class ProjectPermissionMixin(models.Model):
@@ -108,10 +101,9 @@ class ProjectPermissionMixin(models.Model):
     def get_project_key(self):
         return str(self.pk)
 
-    def sync_permissions(self):
-        '''first we delete the existing permissions that are not labelled in the model'''
-        ct, created = ContentType.objects.get_or_create(
-            app_label=self.get_project_key(), model=self, name=self.name)
+    def sync_old_permissions(self):
+        '''first we delete the existing permissions that are not labelled in the model'''        
+        ct = self.get_old_contenttype_for_instance()
         deleteable_permissions = Permission.objects.filter(content_type_id=ct.pk).exclude(
             codename__in=[perm[0] for perm in PROJECT_PERMISSIONS])
         deleteable_permissions.delete()
@@ -119,20 +111,28 @@ class ProjectPermissionMixin(models.Model):
             pm = Permission.objects.get_or_create(
                 content_type_id=ct.id, codename=perm[0], name=perm[1])
 
-    def get_contenttype_for_instance(self):
+    def sync_permissions(self):
+        '''first we delete the existing permissions that are not labelled in the model'''
+        for perm in PROJECT_PERMISSIONS:
+            self.get_instance_permission_by_codename(perm[0])
+
+
+    def get_old_contenttype_for_instance(self):
         ct = ContentType.objects.get(
             app_label=self.get_project_key(), model=self)
         return ct
 
-    def delete_all_instance_permissions(self):
-        '''for the pre delete signal'''
-        deleteable_permissions = Permission.objects.filter(
-            content_type_id=self.get_contenttype_for_instance().id)
-        deleteable_permissions.delete()
+    def get_contenttype_for_instance(self):
+        ct = ContentType.objects.get_for_model(self)
+        return ct
+
+
 
     def get_instance_permission_by_codename(self, codename):
-        pm = Permission.objects.get(
-            codename=codename, content_type_id=self.get_contenttype_for_instance().id)
+        pm, created = Permission.objects.get_or_create(
+            codename=get_permission_codename(self.id, codename), 
+            content_type_id=self.get_contenttype_for_instance().id, 
+            name=get_permission_name(self.name, codename))
         return pm
 
     def _add_instance_permissions_to_user_or_group(self, group_or_user, codename):
@@ -143,18 +143,18 @@ class ProjectPermissionMixin(models.Model):
             group_or_user.user_permissions.add(
                 self.get_instance_permission_by_codename(codename))
 
+    
+
     def make_editor(self, group_or_user):
         self._add_instance_permissions_to_user_or_group(
-            group_or_user, "editor")
+            group_or_user, get_permission_codename(self.id, "editor"))
 
     def make_viewer(self, group_or_user):
         self._add_instance_permissions_to_user_or_group(
-            group_or_user, "viewer")
+            group_or_user,  get_permission_codename(self.id, "viewer"))
 
-    def make_admin(self, group_or_user):
-        self._add_instance_permissions_to_user_or_group(group_or_user, "admin")
-
-
+    def make_owner(self, group_or_user):
+        self._add_instance_permissions_to_user_or_group(group_or_user, get_permission_codename(self.id, "viewer"))
 
     class Meta:
 
@@ -514,31 +514,6 @@ class PinnedCustomField(TimeStampedModel):
             func = self.FIELD_TYPE_CHOICES[self.field_type]["test_datatype"]
             return func(value)
 
-    # data_transformation = models.ForeignKey("cbh_core_model.DataTransformation",
-    #     related_name="pinned_custom_field",
-    #     default=None, blank=True)
-
-    def get_dropdown_list(self, projectKey):
-        is_array = False
-        if self.FIELD_TYPE_CHOICES[self.field_type]["data"]["type"] == "array":
-            is_array = True
-        db_items = get_all_hstore_values("cbh_chembl_model_extension_cbhcompoundbatch  inner join cbh_core_model_project on cbh_core_model_project.id = cbh_chembl_model_extension_cbhcompoundbatch.project_id ",
-                                         "custom_fields",
-                                         self.name,
-                                         is_list=is_array,
-                                         extra_where="cbh_core_model_project.project_key ='%s'" % projectKey)
-        return [item for item in db_items]
-
-    def get_allowed_items(self, projectKey):
-        items = [item.strip()
-                 for item in self.allowed_values.split(",") if item.strip()]
-        setitems = sorted(
-            list(set(items + self.get_dropdown_list(projectKey))))
-        testdata = [{"label": item.strip(), "value": item.strip()}
-                    for item in setitems if item]
-        searchdata = [{"label": "[%s] %s" % (self.name, item.strip()), "value": "%s|%s" % (
-            self.name, item.strip())} for item in setitems if item]
-        return (testdata, searchdata)
 
     @cached_property
     def get_items_simple(self):
