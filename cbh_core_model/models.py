@@ -141,20 +141,21 @@ class ProjectPermissionMixin(models.Model):
                 self.get_instance_permission_by_codename(codename))
         if type(group_or_user) == User:
             group_or_user.user_permissions.add(
-                self.get_instance_permission_by_codename(codename))
+                self.get_instance_permission_by_codename(codename))CreatedByAdmin
 
     
 
     def make_editor(self, group_or_user):
         self._add_instance_permissions_to_user_or_group(
-            group_or_user, get_permission_codename(self.id, "editor"))
+            group_or_user,  "editor")
 
     def make_viewer(self, group_or_user):
         self._add_instance_permissions_to_user_or_group(
-            group_or_user,  get_permission_codename(self.id, "viewer"))
+            group_or_user,   "viewer")
 
     def make_owner(self, group_or_user):
-        self._add_instance_permissions_to_user_or_group(group_or_user, get_permission_codename(self.id, "viewer"))
+        self._add_instance_permissions_to_user_or_group(
+            group_or_user, "owner")
 
     class Meta:
 
@@ -331,12 +332,29 @@ class Project(TimeStampedModel, ProjectPermissionMixin):
         return {'post_slug': self.project_key}
 
 
+def get_name_for_custom_field_config_from_project(p):
+    return "%d__%s__project__config" % (p.id, p.name)
+
+
 def sync_permissions(sender, instance, created, **kwargs):
-    '''After saving the project make sure it has entries in the permissions table'''
+    '''After saving the project make sure it has entries in the permissions table
+    After possible renaming of the project ensure that all associated Custom Field Configs etc. are renamed'''
     if created is True:
         instance.sync_permissions()
 
-        instance.make_editor(instance.created_by)
+        instance.make_owner(instance.created_by)
+    else:
+        #Iterate all of the project permissions associated with this instance and update the user friendly name for those permissions
+        proj_ct = ContentType.objects.get_for_model(instance)
+        for perm_name in PROJECT_PERMISSIONS:
+            perms = Permission.objects.filter(codename=get_permission_codename(instance.id, perm_name[0]), 
+                content_type=proj_ct)
+            for perm in perms:
+                perm.name = get_permission_name(instance.name, perm_name[0])
+                perm.save()
+
+        instance.custom_field_config.name = get_name_for_custom_field_config_from_project(instance)
+        instance.custom_field_config.save()
 
 post_save.connect(sync_permissions, sender=Project, dispatch_uid="proj_perms")
 
