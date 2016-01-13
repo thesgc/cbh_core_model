@@ -3,6 +3,8 @@ from __future__ import unicode_literals
 
 from django.db import models, migrations
 
+from django.core.exceptions import ObjectDoesNotExist
+
 
 
 
@@ -24,15 +26,18 @@ def migrate_old_permissions_to_new_ones(apps, schema_editor):
     for perm in Permission.objects.all():
         ct = perm.content_type
         if ct.app_label.isdigit():
-            project = Project.objects.get(id=int(ct.app_label))
-            if perm.codename == "admin":
-                perm.codename = "owner"
-            perm.name = get_permission_name(project.name, perm.codename)
-            perm.codename = get_permission_codename(project.id, perm.codename)
-            
-            perm.content_type = new_ct
-            perm.content_type_id = new_ct.id
-            perm.save()
+            try:
+                project = Project.objects.get(id=int(ct.app_label))
+                if perm.codename == "admin":
+                    perm.codename = "owner"
+                perm.name = get_permission_name(project.name, perm.codename)
+                perm.codename = get_permission_codename(project.id, perm.codename)
+                
+                perm.content_type = new_ct
+                perm.content_type_id = new_ct.id
+                perm.save()
+            except ObjectDoesNotExist:
+                pass
         if ct.app_label == "_can_see":
             perm.content_type = skin_ct
             perm.content_type_id = skin_ct.id
