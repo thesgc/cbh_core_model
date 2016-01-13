@@ -141,7 +141,7 @@ class ProjectPermissionMixin(models.Model):
                 self.get_instance_permission_by_codename(codename))
         if type(group_or_user) == User:
             group_or_user.user_permissions.add(
-                self.get_instance_permission_by_codename(codename))CreatedByAdmin
+                self.get_instance_permission_by_codename(codename))
 
     
 
