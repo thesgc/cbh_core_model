@@ -17,6 +17,7 @@ import django
 PERMISSION_CODENAME_SEPARATOR = "__"
 OPEN = "open"
 RESTRICTED = "restricted"
+
 RESTRICTION_CHOICES = ((OPEN, "Open to all viewers"),
                         (RESTRICTED, "Restricted to editors"))
 #Assume that these are declared in order of increasing permission
@@ -186,7 +187,7 @@ class DataType(TimeStampedModel):
 
 
 class CustomFieldConfig(TimeStampedModel):
-    name = models.CharField(unique=True, max_length=500)
+    name = models.CharField(unique=True, max_length=500, null=False, blank=False)
     created_by = models.ForeignKey("auth.User")
     schemaform = models.TextField(default="", null=True, blank=True, )
     data_type = models.ForeignKey(
@@ -504,7 +505,7 @@ class PinnedCustomField(TimeStampedModel):
     ))
 
     field_key = models.CharField(max_length=500,  default="")
-    name = models.CharField(max_length=500)
+    name = models.CharField(max_length=500, null=False, blank=False)
     description = models.CharField(
         max_length=1024, blank=True, null=True, default="")
     custom_field_config = models.ForeignKey(
