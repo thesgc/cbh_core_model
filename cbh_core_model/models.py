@@ -186,13 +186,37 @@ class DataType(TimeStampedModel):
         return self.name
 
 
+class CustomFieldConfigManager(models.Manager):
+    def from_schema_lists(self, data, names, data_types, widths, name, creator):
+        '''
+            Based on the lists of data and data types parsed from a single excel sheet or other tabular data...
+            Generate a custom field config object
+        '''
+        custom_field_config, created = self.get_or_create(
+                created_by=creator, name=name)
+        if  created:
+            for colindex, pandas_dtype in enumerate(data_types):
+                pcf = PinnedCustomField()
+                pcf.field_type = pcf.pandas_converter(
+                        widths[colindex], pandas_dtype)
+                pcf.name = names[colindex]
+                pcf.position = colindex
+                pcf.custom_field_config = custom_field_config
+                custom_field_config.pinned_custom_field.add(pcf)
+            custom_field_config.save()
+        return custom_field_config
+
+
 class CustomFieldConfig(TimeStampedModel):
+    '''
+    Stores the schema of fields used in ChemReg and AssayReg
+    '''
     name = models.CharField(unique=True, max_length=500, null=False, blank=False)
     created_by = models.ForeignKey("auth.User")
     schemaform = models.TextField(default="", null=True, blank=True, )
     data_type = models.ForeignKey(
         DataType, null=True, blank=True, default=None)
-    #objects = CustomFieldConfigManager()
+    objects = CustomFieldConfigManager()
 
     def __unicode__(self):
         return self.name
