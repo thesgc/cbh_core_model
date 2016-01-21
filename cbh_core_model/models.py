@@ -13,6 +13,7 @@ import json
 import dateutil
 import time
 import django
+from flowjs.models import FlowFile
 
 PERMISSION_CODENAME_SEPARATOR = "__"
 OPEN = "open"
@@ -379,6 +380,10 @@ def test_bool(value):
     return False
 
 
+def test_file(value):
+    return False
+
+
 
 def test_int(value):
     try:
@@ -429,6 +434,7 @@ class PinnedCustomField(TimeStampedModel):
     DATE = "date"
     IMAGE = "imghref"
     LINK = "href"
+    FILE_ATTACHMENT = "object"
 
 
     def pandas_converter(self, field_length, pandas_dtype):
@@ -481,7 +487,9 @@ class PinnedCustomField(TimeStampedModel):
         (BOOLEAN, {"name": "checkbox", "data": {
          "icon": "<span class ='glyphicon'>3.1</span>", "type": "boolean"},"test_datatype" : test_bool }),
         ("related", {"name": "TEST", "data": {
-         "icon": "<span class ='glyphicon'>3.1</span>", "type": "string"}, "test_datatype" : test_string})
+         "icon": "<span class ='glyphicon'>3.1</span>", "type": "string"}, "test_datatype" : test_string}),
+        (FILE_ATTACHMENT, {"name": "File Upload", "data": {
+         "icon": "<span class ='glyphicon glyphicon-paperclip'></span>", "type": "object", "format": "file_upload"}, "test_datatype" : test_file})
 
     ))
 
@@ -550,7 +558,11 @@ class PinnedCustomField(TimeStampedModel):
         # form["allowed_values"] = obj.allowed_values
         # form["part_of_blinded_key"] = obj.part_of_blinded_key
         searchitems = []
-        
+        # if data.get("format", False) == "file_upload":
+        #     #specify the default to be a flowfile
+        #     data['default'] = models.ForeignKey(FlowFile, null=True, blank=True, default=None)
+
+
         if data["type"] == "array":
             data['default'] = obj.default.split(",")
         if obj.UISELECT in data.get("format", ""):
@@ -559,6 +571,20 @@ class PinnedCustomField(TimeStampedModel):
             form["help"] = obj.description
             data['items'] = obj.get_items_simple
             form['permanent_items'] = obj.get_items_simple
+
+        if data.get("format", False) == "file_upload":
+            form["uploadOptions"] = { "modal": {
+                                          'title': 'Modal Title specified here',
+                                          'flow': {
+                                            'dropEnabled': False,
+                                            'imageOnly': False,
+                                            'init': 'dataoverviewctrl.flowinit',
+                                            'success': 'success(file, formkey)',
+                                            'removeFile': 'removeFile(formkey, index, uniqueidentifier)',
+                                          }
+                                        }
+                                      }
+            data['default'] = FlowFile()
 
         if obj.default:
             data['default'] = obj.default
