@@ -3,7 +3,7 @@ from django.db import models, connection
 
 from solo.models import SingletonModel
 from django_extensions.db.models import TimeStampedModel
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, pre_save
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth.models import Permission, User, Group
 from collections import OrderedDict
@@ -14,6 +14,8 @@ import dateutil
 import time
 import django
 from flowjs.models import FlowFile
+from django.template.defaultfilters import slugify 
+
 
 PERMISSION_CODENAME_SEPARATOR = "__"
 OPEN = "open"
@@ -383,6 +385,12 @@ def sync_permissions(sender, instance, created, **kwargs):
         instance.custom_field_config.save()
 
 post_save.connect(sync_permissions, sender=Project, dispatch_uid="proj_perms")
+
+def update_project_key(sender, instance, **kwargs):
+    instance.project_key = slugify(instance.name)
+
+
+pre_save.connect(update_project_key, sender=Project, dispatch_uid="proj_key")
 
 
 class SkinningConfig(SingletonModel):
