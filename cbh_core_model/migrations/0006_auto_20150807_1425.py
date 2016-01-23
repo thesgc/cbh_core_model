@@ -5,11 +5,8 @@ from django.db import models, migrations
 
 
 def create_data_types(apps, schema_editor):
-
-    DataType = apps.get_model("cbh_core_model", "DataType")
-    DataType.objects.create(name="Assay")
-    DataType.objects.create(name="Activity")
-    DataType.objects.create(name="Study")
+    #This method was removed in favour of adding a fixture
+    pass
 
 
 class Migration(migrations.Migration):
