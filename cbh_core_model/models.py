@@ -632,6 +632,7 @@ class PinnedCustomField(TimeStampedModel):
                                             'init': 'dataoverviewctrl.flowinit',
                                             'success': 'success(file, formkey)',
                                             'removeFile': 'removeFile(formkey, index, uniqueidentifier)',
+                                            'imageFunction': 'fetchImage(url)'
                                           }
                                         }
                                       }
