@@ -635,7 +635,8 @@ class PinnedCustomField(TimeStampedModel):
                                           }
                                         }
                                       }
-            data['default'] = FlowFile()
+            data['default'] = {}
+            form["default"] = {"attachments" : []}
 
         if obj.default:
             data['default'] = obj.default
