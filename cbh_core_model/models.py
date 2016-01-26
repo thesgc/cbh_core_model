@@ -631,12 +631,12 @@ class PinnedCustomField(TimeStampedModel):
                                             'imageOnly': False,
                                             'init': 'dataoverviewctrl.flowinit',
                                             'success': 'success(file, formkey)',
-                                            'removeFile': 'removeFile(formkey, index, uniqueidentifier)',
+                                            'removeFile': 'removeFile(formkey, index, url)',
                                             'imageFunction': 'fetchImage(url)'
                                           }
                                         }
                                       }
-            data['default'] = {}
+            data['default'] = {"attachments" : []}
             form["default"] = {"attachments" : []}
 
         if obj.default:
