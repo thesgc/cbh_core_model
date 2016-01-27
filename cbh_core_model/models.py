@@ -15,7 +15,7 @@ import time
 import django
 from flowjs.models import FlowFile
 from django.template.defaultfilters import slugify 
-
+from django_hstore import hstore
 
 PERMISSION_CODENAME_SEPARATOR = "__"
 OPEN = "open"
@@ -167,12 +167,25 @@ class ProjectPermissionMixin(models.Model):
 
 
 class ProjectType(TimeStampedModel):
-
+    SAVED_SEARCH_TEMPLATE = [{
+                            "required": False,
+                            "field_type": "char",
+                            "open_or_restricted": "open",
+                            "name": "Alias"
+                        },
+                        {
+                            "required": False,
+                            "field_type": "char",
+                            "open_or_restricted": "open",
+                            "name": "URL"
+                        }]
     ''' Allows configuration of parts of the app on a per project basis - initially will be used to separate out compound and inventory projects '''
     name = models.CharField(
         max_length=100, db_index=True, null=True, blank=True, default=None)
     show_compounds = models.BooleanField(default=True)
-
+    saved_search_project_type = models.BooleanField(default=False)
+    #Set the default to -1 to match the empty default custom field config
+    custom_field_config_template_id = models.IntegerField(default=-1)
     def __unicode__(self):
         return self.name
 
