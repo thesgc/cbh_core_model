@@ -186,8 +186,19 @@ class ProjectType(TimeStampedModel):
     saved_search_project_type = models.BooleanField(default=False)
     #Set the default to -1 to match the empty default custom field config
     custom_field_config_template_id = models.IntegerField(default=-1)
+    set_as_default = models.BooleanField(default=False)
     def __unicode__(self):
         return self.name
+
+
+def make_default(sender, instance, **kwargs):
+    if instance.set_as_default:
+        ProjectType.objects.exclude(pk=instance.id).update(set_as_default=False)
+
+
+post_save.connect(make_default, sender=ProjectType, dispatch_uid="ptype")
+
+
 
 
 class DataType(TimeStampedModel):
