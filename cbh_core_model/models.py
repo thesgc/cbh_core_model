@@ -534,7 +534,7 @@ class PinnedCustomField(TimeStampedModel):
         # (TEXTAREA, {"name": "Full text", "data": {
         #  "icon": "<span class ='glyphicon glyphicon-font'></span>", "type": "string", "format": "textarea"}, "test_datatype" : test_string}),
         (TEXTAREA, {"name": "Full text", "data": {
-         "icon": "<span class ='glyphicon glyphicon-font'></span>", "type": "string", "format": "ckeditor", "ckeditor":{ 'width' : '300px'},}, "test_datatype" : test_string}),
+         "icon": "<span class ='glyphicon glyphicon-font'></span>", "type": "string", "format": "ckeditor", "ckeditor":{ 'config.toolbar_Standard': [ { 'name': 'basicstyles', 'items' : [ 'Italic','Underline','Strike','Subscript','Superscript','-','RemoveFormat' ] }, ] },}, "test_datatype" : test_string}),
         (UISELECT, {"name": "Choice field", "data": {
          "type": "string", "format": "uiselect"}, "test_datatype" : test_string}),
         (INTEGER, {"name": "Integer field", "data": {
@@ -672,6 +672,20 @@ class PinnedCustomField(TimeStampedModel):
             #set default to empty array or CSV from default field
             data["default"] = []
 
+        #add config options for ckeditor
+        if data.get("format", False) == "ckeditor":
+            form['ckeditor'] = { 'toolbar': [
+                                                { 'name': 'clipboard', 'items': [ 'Cut', 'Copy', 'Paste', 'PasteText', 'PasteFromWord', '-', 'Undo', 'Redo' ] },
+                                                { 'name': 'editing', 'items': [ 'Scayt' ] },
+                                                { 'name': 'links', 'items': [ 'Link', 'Unlink', 'Anchor' ] },
+                                                { 'name': 'tools', 'items': [ 'Maximize' ] },
+                                                '/',
+                                                { 'name': 'basicstyles', 'items' : [ 'Bold','Italic','Underline','Strike','Subscript','Superscript','-','RemoveFormat' ] },
+                                                { 'name': 'insert', 'items' : [ 'HorizontalRule','SpecialChar','PageBreak' ] },
+                                                { 'name': 'paragraph', 'items' : [ 'NumberedList','BulletedList','-','Outdent','Indent','-','JustifyLeft','JustifyCenter','JustifyRight','JustifyBlock'] },
+                                                { 'name': 'styles', 'items' : [ 'Styles', 'Format' ] },
+                                                { 'name': 'about', 'items' : [ 'About' ] }
+                                            ] }
 
         if data.get("format", False) == obj.DATE:
             maxdate = time.strftime("%Y-%m-%d")
