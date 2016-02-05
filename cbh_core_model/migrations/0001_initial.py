@@ -114,7 +114,7 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(
                     verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('instance_alias', models.CharField(
-                    default=b'ChemReg', max_length=50, null=True)),
+                    default=b'ChemiReg', max_length=50, null=True)),
                 ('project_alias', models.CharField(
                     default=b'project', max_length=50, null=True)),
                 ('result_alias', models.CharField(

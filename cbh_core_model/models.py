@@ -236,7 +236,7 @@ class CustomFieldConfigManager(models.Manager):
 
 class CustomFieldConfig(TimeStampedModel):
     '''
-    Stores the schema of fields used in ChemReg and AssayReg
+    Stores the schema of fields used in ChemiReg and AssayReg
     '''
     name = models.CharField(unique=True, max_length=500, null=False, blank=False)
     created_by = models.ForeignKey("auth.User")
@@ -422,7 +422,7 @@ class SkinningConfig(SingletonModel):
     '''Holds information about custom system messages and other customisable elements'''
     #created_by = models.ForeignKey("auth.User")
     instance_alias = models.CharField(
-        max_length=50, null=True, blank=False, default='ChemReg')
+        max_length=50, null=True, blank=False, default='ChemiReg')
     project_alias = models.CharField(
         max_length=50, null=True, blank=False, default='project')
     result_alias = models.CharField(

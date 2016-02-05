@@ -9,7 +9,7 @@ def migrate_perms(apps, schema_editor):
     ct, created = ContentType.objects.get_or_create(
             app_label="_can_see", model=ContentType, name="Apps which the user can see")
       
-    pm = Permission.objects.get_or_create( content_type_id=ct.id, codename="no_chemreg", name="ChemReg Disabled")
+    pm = Permission.objects.get_or_create( content_type_id=ct.id, codename="no_chemreg", name="ChemiReg Disabled")
     pm = Permission.objects.get_or_create( content_type_id=ct.id, codename="no_assayreg", name="AssayReg Disabled")
 
 
