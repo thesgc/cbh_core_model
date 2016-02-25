@@ -184,6 +184,7 @@ class ProjectType(TimeStampedModel):
         max_length=100, db_index=True, null=True, blank=True, default=None)
     show_compounds = models.BooleanField(default=True)
     saved_search_project_type = models.BooleanField(default=False)
+    plate_map_project_type = models.BooleanField(default=False)
     #Set the default to -1 to match the empty default custom field config
     custom_field_config_template_id = models.IntegerField(default=-1)
     set_as_default = models.BooleanField(default=False)
