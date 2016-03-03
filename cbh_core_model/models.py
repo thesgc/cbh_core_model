@@ -622,6 +622,7 @@ class PinnedCustomField(TimeStampedModel):
 
         data["title"] = obj.name
         data["placeholder"] = obj.description
+        data["data"] = "custom_fields.%s" % obj.name
         form = {}
         form["position"] = obj.position
         form["key"] = obj.get_space_replaced_name
