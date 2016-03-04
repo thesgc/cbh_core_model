@@ -510,7 +510,7 @@ class PinnedCustomField(TimeStampedModel):
     DATE = "date"
     IMAGE = "imghref"
     LINK = "href"
-    FILE_ATTACHMENT = "object"
+    FILE_ATTACHMENT = "file"
 
 
     def pandas_converter(self, field_length, pandas_dtype):
@@ -660,15 +660,15 @@ class PinnedCustomField(TimeStampedModel):
                                           'flow': {
                                             'dropEnabled': False,
                                             'imageOnly': False,
-                                            'init': 'flowinit',
+                                            'init': {},
                                             'success': 'success(file, formkey)',
                                             'removeFile': 'removeFile(formkey, index, url)',
                                             'imageFunction': 'fetchImage(url)'
                                           }
                                         }
                                       }
-            data['default'] = {"attachments" : []}
-            form["default"] = {"attachments" : []}
+            data['default'] = {"attachments" : [], 'override_renderer': 'fileUploadRenderer'}
+            form["default"] = {"attachments" : [], 'override_renderer': 'fileUploadRenderer'}
 
         if obj.default:
             data['default'] = obj.default
@@ -742,7 +742,7 @@ from cbh_core_api.utils import chunk_upload_to
 
 
 
-class FlowFile(models.Model):
+class CBHFlowFile(models.Model):
     """
     A file upload through Flow.js
     """
@@ -767,13 +767,14 @@ class FlowFile(models.Model):
     state = models.IntegerField(choices=STATE_CHOICES, default=STATE_UPLOADING)
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateField(auto_now=True)
+    project = models.ForeignKey("cbh_core_model.Project")
 
     def __unicode__(self):
         return self.identifier
 
     def update(self):
         self.total_chunks_uploaded = self.chunks.count()
-        super(FlowFile, self).save()
+        super(CBHFlowFile, self).save()
         self.join_chunks()
 
     @property
@@ -835,7 +836,7 @@ class FlowFile(models.Model):
 
             # set state as completed
             self.state = self.STATE_COMPLETED
-            super(FlowFile, self).save()
+            super(CBHFlowFile, self).save()
 
             # delete chunks automatically if is activated in settings
             if FLOWJS_AUTO_DELETE_CHUNKS:
@@ -848,7 +849,7 @@ class FlowFile(models.Model):
         return self.identifier.startswith(session)
 
 
-class FlowFileChunk(models.Model):
+class CBHFlowFileChunk(models.Model):
     """
     A chunk is part of the file uploaded
     """
@@ -856,7 +857,7 @@ class FlowFileChunk(models.Model):
         ordering = ['number']
 
     # identification and file details
-    parent = models.ForeignKey(FlowFile, related_name="chunks")
+    parent = models.ForeignKey(CBHFlowFile, related_name="chunks")
     file = models.FileField(max_length=255, upload_to=chunk_upload_to)
     number = models.IntegerField()
     created_at = models.DateTimeField(auto_now_add=True)
@@ -869,11 +870,11 @@ class FlowFileChunk(models.Model):
         return self.parent.get_chunk_filename(self.number)
 
     def save(self, *args, **kwargs):
-        super(FlowFileChunk, self).save(*args, **kwargs)
+        super(CBHFlowFileChunk, self).save(*args, **kwargs)
         self.parent.update()
 
 
-@receiver(pre_delete, sender=FlowFile)
+@receiver(pre_delete, sender=CBHFlowFile)
 def flow_file_delete(sender, instance, **kwargs):
     """
     Remove files on delete if is activated in settings
@@ -885,7 +886,7 @@ def flow_file_delete(sender, instance, **kwargs):
             pass
 
 
-@receiver(pre_delete, sender=FlowFileChunk)
+@receiver(pre_delete, sender=CBHFlowFileChunk)
 def flow_file_chunk_delete(sender, instance, **kwargs):
     """
     Remove file when chunk is deleted
