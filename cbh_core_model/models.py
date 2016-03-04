@@ -527,45 +527,45 @@ class PinnedCustomField(TimeStampedModel):
         return self.TEXT
 
     FIELD_TYPE_CHOICES = OrderedDict((
-        (TEXT, {"name": "Short text field", "data": {
-         "type": "string", "icon": "<span class ='glyphicon glyphicon-font'></span>"}, "test_datatype" : test_string}
+        (TEXT, {"name": "Short text field", "data": {"className": "htCenter htMiddle ",
+         "type": "string", "icon": "<span class ='glyphicon glyphicon-font'></span>", "renderer" : "customFieldRenderer" }, "test_datatype" : test_string}
          ),
         ("char", {
-            "name": "Short text field", "data": {"type": "string"}, "test_datatype" : test_string}),
+            "name": "Short text field", "data": {"className": "htCenter htMiddle ","type": "string", "renderer" : "customFieldRenderer"}, "test_datatype" : test_string}),
         # (TEXTAREA, {"name": "Full text", "data": {
         #  "icon": "<span class ='glyphicon glyphicon-font'></span>", "type": "string", "format": "textarea"}, "test_datatype" : test_string}),
-        (TEXTAREA, {"name": "Full text", "data": {
+        (TEXTAREA, {"name": "Full text", "data": { "className": "htCenter htMiddle ","renderer" : "customFieldRenderer",
          "icon": "<span class ='glyphicon glyphicon-font'></span>", "type": "string", "format": "ckeditor", "ckeditor":{ 'config.toolbar_Standard': [ { 'name': 'basicstyles', 'items' : [ 'Italic','Underline','Strike','Subscript','Superscript','-','RemoveFormat' ] }, ] },}, "test_datatype" : test_string}),
-        (UISELECT, {"name": "Choice field", "data": {
-         "type": "string", "format": "uiselect"}, "test_datatype" : test_string}),
-        (INTEGER, {"name": "Integer field", "data": {
-         "icon": "<span class ='glyphicon glyphicon-stats'></span>", "type": "integer"}, "test_datatype" : test_int}),
-        (NUMBER, {"name": "Decimal field", "data": {
-         "icon": "<span class ='glyphicon glyphicon-sound-5-1'></span>", "type": "number"}, "test_datatype": test_number}),
-        (UISELECTTAG, {"name": "Choice allowing create", "data":  {
-         "icon": "<span class ='glyphicon glyphicon-tag'></span>", "type": "string", "format": "uiselect", "options":{}}, "test_datatype" : test_string}),
-        (UISELECTTAGS, {"name": "Tags field allowing create", "data": {"icon": "<span class ='glyphicon glyphicon-tags'></span>", "type": "array", "format": "uiselect", "options": {
+        (UISELECT, {"name": "Choice field", "data": {"className": "htCenter htMiddle ",
+         "type": "string", "format": "uiselect", "renderer" : "customFieldRenderer"}, "test_datatype" : test_string}),
+        (INTEGER, {"name": "Integer field", "data": {"className": "htCenter htMiddle ",
+         "icon": "<span class ='glyphicon glyphicon-stats'></span>", "type": "integer", "renderer" : "customFieldRenderer"}, "test_datatype" : test_int}),
+        (NUMBER, {"name": "Decimal field", "data": {"className": "htCenter htMiddle ",
+         "icon": "<span class ='glyphicon glyphicon-sound-5-1'></span>", "type": "number", "renderer" : "customFieldRenderer"}, "test_datatype": test_number}),
+        (UISELECTTAG, {"name": "Choice allowing create", "data":  {"className": "htCenter htMiddle ",
+         "icon": "<span class ='glyphicon glyphicon-tag'></span>", "type": "string", "format": "uiselect", "options":{}, "renderer" : "customFieldRenderer"}, "test_datatype" : test_string}),
+        (UISELECTTAGS, {"name": "Tags field allowing create", "data": {"className": "htCenter htMiddle ","renderer" : "customFieldRenderer" , "icon": "<span class ='glyphicon glyphicon-tags'></span>", "type": "array", "format": "uiselect", "options": {
             "tagging": "tagFunction",
             "taggingLabel": "(adding new)",
             "taggingTokens": "ENTER",
             'refreshDelay': 10
         }}, "test_datatype" : test_string}),
-        (PERCENTAGE, {"name": "Percentage field", "data": {
+        (PERCENTAGE, {"name": "Percentage field", "data": {"className": "htCenter htMiddle ","renderer" : "customFieldRenderer",
          "icon": "<span class ='glyphicon'>%</span>", "type": "number", "maximum": 100.0, "minimum": 0.1}, "test_datatype": test_percentage}),
-        (DATE,  {"name": "Date Field", "data": {
+        (DATE,  {"name": "Date Field", "data": {"className": "htCenter htMiddle ", "renderer" : "customFieldRenderer",
          "icon": "<span class ='glyphicon glyphicon-calendar'></span>", "type": "string",   "format": "date"}, "test_datatype": test_stringdate}),
-        (LINK, {"name": "Link to server or external", "data": {"format": "href", "type":
+        (LINK, {"name": "Link to server or external", "data": {"className": "htCenter htMiddle ","renderer" : "customFieldRenderer", "format": "href", "type":
                                                                "string", "icon": "<span class ='glyphicon glyphicon glyphicon-new-window'></span>"}, "test_datatype" : test_string}),
-        (IMAGE, {"name": "Image link to embed", "data": {"format": "imghref", "type":
+        (IMAGE, {"name": "Image link to embed", "data": {"className": "htCenter htMiddle ","renderer" : "customFieldRenderer" , "format": "imghref", "type":
                                                          "string", "icon": "<span class ='glyphicon glyphicon glyphicon-picture'></span>"},  "test_datatype" : test_string}),
-        (DECIMAL, {"name": "Decimal field", "data": {
-         "icon": "<span class ='glyphicon'>3.1</span>", "type": "number"},  "test_datatype" : test_number}),
-        (BOOLEAN, {"name": "checkbox", "data": {
+        (DECIMAL, {"name": "Decimal field", "data": {"className": "htCenter htMiddle ",
+         "renderer" : "customFieldRenderer", "icon": "<span class ='glyphicon'>3.1</span>", "type": "number"},  "test_datatype" : test_number}),
+        (BOOLEAN, {"name": "checkbox", "data": {"className": "htCenter htMiddle ","renderer" : "customFieldRenderer",
          "icon": "<span class ='glyphicon'>3.1</span>", "type": "boolean"},"test_datatype" : test_bool }),
-        ("related", {"name": "TEST", "data": {
+        ("related", {"name": "TEST", "data": {"className": "htCenter htMiddle ", "renderer" : "customFieldRenderer",
          "icon": "<span class ='glyphicon'>3.1</span>", "type": "string"}, "test_datatype" : test_string}),
-        (FILE_ATTACHMENT, {"name": "File Upload", "data": {
-         "icon": "<span class ='glyphicon glyphicon-paperclip'></span>", "type": "object", "format": "file_upload"}, "test_datatype" : test_file})
+        (FILE_ATTACHMENT, {"name": "File Upload", "data": { "className": "htCenter htMiddle ",
+         "icon": "<span class ='glyphicon glyphicon-paperclip'></span>", "type": "object", "format": "file_upload", "renderer" : "fileUploadRenderer"}, "test_datatype" : test_file})
 
     ))
 
@@ -623,8 +623,11 @@ class PinnedCustomField(TimeStampedModel):
 
         data["title"] = obj.name
         data["placeholder"] = obj.description
-        data["data"] = "custom_fields.%s" % obj.name
+        
+
         form = {}
+        form["knownBy"] = obj.name
+        form["data"] = "custom_fields.%s" % obj.name
         form["position"] = obj.position
         form["key"] = obj.get_space_replaced_name
         form["title"] = obj.name
