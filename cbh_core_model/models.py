@@ -620,13 +620,14 @@ class PinnedCustomField(TimeStampedModel):
     @cached_property
     def field_values(obj):
         data = copy(obj.FIELD_TYPE_CHOICES[obj.field_type]["data"])
-
+        tabular_schema = {}
         data["title"] = obj.name
         data["placeholder"] = obj.description
         
         display_form = copy(obj.FIELD_TYPE_CHOICES[obj.field_type]["display_form"])
         form = {}
         form["knownBy"] = obj.name
+        form["field_type"] = obj.field_type
         form["data"] = "custom_fields.%s" % obj.name
         form["position"] = obj.position
         form["key"] = obj.get_space_replaced_name
