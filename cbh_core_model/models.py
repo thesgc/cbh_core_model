@@ -528,44 +528,44 @@ class PinnedCustomField(TimeStampedModel):
 
     FIELD_TYPE_CHOICES = OrderedDict((
         (TEXT, {"name": "Short text field", "display_form":{"type" :"copyfield"} ,"data": {"className": "htCenter htMiddle ",
-         "type": "string", "icon": "<span class ='glyphicon glyphicon-font'></span>", "renderer" : "customFieldRenderer" }, "test_datatype" : test_string}
+         "type": "string", "icon": "<span class ='glyphicon glyphicon-font'></span>", "renderer_named" : "defaultCustomFieldRenderer" }, "test_datatype" : test_string}
          ),
         ("char", {
-            "name": "Short text field", "display_form":{"type" :"copyfield"}, "data": {"className": "htCenter htMiddle ","type": "string", "renderer" : "customFieldRenderer"}, "test_datatype" : test_string}),
+            "name": "Short text field", "display_form":{"type" :"copyfield"}, "data": {"className": "htCenter htMiddle ","type": "string", "renderer_named" : "defaultCustomFieldRenderer"}, "test_datatype" : test_string}),
         # (TEXTAREA, {"name": "Full text", "data": {
         #  "icon": "<span class ='glyphicon glyphicon-font'></span>", "type": "string", "format": "textarea"}, "test_datatype" : test_string}),
-        (TEXTAREA, {"name": "Full text", "display_form":{"type" :"copyfield"}, "data": { "className": "htCenter htMiddle ","renderer" : "customFieldRenderer",
+        (TEXTAREA, {"name": "Full text", "display_form":{"type" :"copyfield"}, "data": { "className": "htCenter htMiddle ","renderer_named" : "defaultCustomFieldRenderer",
          "icon": "<span class ='glyphicon glyphicon-font'></span>", "type": "string", "format": "ckeditor", "ckeditor":{ 'config.toolbar_Standard': [ { 'name': 'basicstyles', 'items' : [ 'Italic','Underline','Strike','Subscript','Superscript','-','RemoveFormat' ] }, ] },}, "test_datatype" : test_string}),
         (UISELECT, {"name": "Choice field", "display_form":{"type" :"copyfield"}, "data": {"className": "htCenter htMiddle ",
-         "type": "string", "format": "uiselect", "renderer" : "customFieldRenderer"}, "test_datatype" : test_string}),
+         "type": "string", "format": "uiselect", "renderer_named" : "defaultCustomFieldRenderer"}, "test_datatype" : test_string}),
         (INTEGER, {"name": "Integer field", "display_form":{"type" :"copyfield"}, "data": {"className": "htCenter htMiddle ",
-         "icon": "<span class ='glyphicon glyphicon-stats'></span>", "type": "integer", "renderer" : "customFieldRenderer"}, "test_datatype" : test_int}),
+         "icon": "<span class ='glyphicon glyphicon-stats'></span>", "type": "integer", "renderer_named" : "defaultCustomFieldRenderer"}, "test_datatype" : test_int}),
         (NUMBER, {"name": "Decimal field", "display_form":{"type" :"copyfield"}, "data": {"className": "htCenter htMiddle ",
-         "icon": "<span class ='glyphicon glyphicon-sound-5-1'></span>", "type": "number", "renderer" : "customFieldRenderer"}, "test_datatype": test_number}),
+         "icon": "<span class ='glyphicon glyphicon-sound-5-1'></span>", "type": "number", "renderer_named" : "defaultCustomFieldRenderer"}, "test_datatype": test_number}),
         (UISELECTTAG, {"name": "Choice allowing create", "display_form":{"type" :"copyfield"}, "data":  {"className": "htCenter htMiddle ",
-         "icon": "<span class ='glyphicon glyphicon-tag'></span>", "type": "string", "format": "uiselect", "options":{}, "renderer" : "customFieldRenderer"}, "test_datatype" : test_string}),
-        (UISELECTTAGS, {"name": "Tags field allowing create", "display_form":{"type" :"copyfield"}, "data": {"className": "htCenter htMiddle ","renderer" : "customFieldRenderer" , "icon": "<span class ='glyphicon glyphicon-tags'></span>", "type": "array", "format": "uiselect", "options": {
+         "icon": "<span class ='glyphicon glyphicon-tag'></span>", "type": "string", "format": "uiselect", "options":{}, "renderer_named" : "defaultCustomFieldRenderer"}, "test_datatype" : test_string}),
+        (UISELECTTAGS, {"name": "Tags field allowing create", "display_form":{"type" :"copyfield"}, "data": {"className": "htCenter htMiddle ","renderer_named" : "defaultCustomFieldRenderer" , "icon": "<span class ='glyphicon glyphicon-tags'></span>", "type": "array", "format": "uiselect", "options": {
             "tagging": "tagFunction",
             "taggingLabel": "(adding new)",
             "taggingTokens": "ENTER",
             'refreshDelay': 10
         }}, "test_datatype" : test_string}),
-        (PERCENTAGE, {"name": "Percentage field", "display_form":{"type" :"copyfield"}, "data": {"className": "htCenter htMiddle ","renderer" : "customFieldRenderer",
+        (PERCENTAGE, {"name": "Percentage field", "display_form":{"type" :"copyfield"}, "data": {"className": "htCenter htMiddle ","renderer_named" : "defaultCustomFieldRenderer",
          "icon": "<span class ='glyphicon'>%</span>", "type": "number", "maximum": 100.0, "minimum": 0.1}, "test_datatype": test_percentage}),
-        (DATE,  {"name": "Date Field", "display_form":{"type" :"copyfield"}, "data": {"className": "htCenter htMiddle ", "renderer" : "customFieldRenderer",
+        (DATE,  {"name": "Date Field", "display_form":{"type" :"copyfield"}, "data": {"className": "htCenter htMiddle ", "renderer_named" : "defaultCustomFieldRenderer",
          "icon": "<span class ='glyphicon glyphicon-calendar'></span>", "type": "string",   "format": "date"}, "test_datatype": test_stringdate}),
-        (LINK, {"name": "Link to server or external", "display_form":{"type" :"copyfield"}, "data": {"className": "htCenter htMiddle ","renderer" : "customFieldRenderer", "format": "href", "type":
+        (LINK, {"name": "Link to server or external", "display_form":{"type" :"copyfield"}, "data": {"className": "htCenter htMiddle ","renderer_named" : "defaultCustomFieldRenderer", "format": "href", "type":
                                                                "string", "icon": "<span class ='glyphicon glyphicon glyphicon-new-window'></span>"}, "test_datatype" : test_string}),
-        (IMAGE, {"name": "Image link to embed", "display_form":{"type" :"copyfield"}, "data": {"className": "htCenter htMiddle ","renderer" : "customFieldRenderer" , "format": "imghref", "type":
+        (IMAGE, {"name": "Image link to embed", "display_form":{"type" :"copyfield"}, "data": {"className": "htCenter htMiddle ","renderer_named" : "defaultCustomFieldRenderer" , "format": "imghref", "type":
                                                          "string", "icon": "<span class ='glyphicon glyphicon glyphicon-picture'></span>"},  "test_datatype" : test_string}),
         (DECIMAL, {"name": "Decimal field", "display_form":{"type" :"copyfield"}, "data": {"className": "htCenter htMiddle ",
-         "renderer" : "customFieldRenderer", "icon": "<span class ='glyphicon'>3.1</span>", "type": "number"},  "test_datatype" : test_number}),
-        (BOOLEAN, {"name": "checkbox", "display_form":{"type" :"copyfield"}, "data": {"className": "htCenter htMiddle ","renderer" : "customFieldRenderer",
+         "renderer_named" : "defaultCustomFieldRenderer", "icon": "<span class ='glyphicon'>3.1</span>", "type": "number"},  "test_datatype" : test_number}),
+        (BOOLEAN, {"name": "checkbox", "display_form":{"type" :"copyfield"}, "data": {"className": "htCenter htMiddle ","renderer_named" : "defaultCustomFieldRenderer",
          "icon": "<span class ='glyphicon'>3.1</span>", "type": "boolean"},"test_datatype" : test_bool }),
-        ("related", {"name": "TEST", "display_form":{"type" :"copyfield"}, "data": {"className": "htCenter htMiddle ", "renderer" : "customFieldRenderer",
+        ("related", {"name": "TEST", "display_form":{"type" :"copyfield"}, "data": {"className": "htCenter htMiddle ", "renderer_named" : "defaultCustomFieldRenderer",
          "icon": "<span class ='glyphicon'>3.1</span>", "type": "string"}, "test_datatype" : test_string}),
         (FILE_ATTACHMENT, {"name": "File Upload", "display_form":{"type" :"attachmentlist"}, "data": { "className": "htCenter htMiddle ",
-         "icon": "<span class ='glyphicon glyphicon-paperclip'></span>", "type": "object", "format": "file_upload", "renderer" : "fileUploadRenderer"}, "test_datatype" : test_file})
+         "icon": "<span class ='glyphicon glyphicon-paperclip'></span>", "type": "object", "format": "file_upload", "renderer_named" : "fileUploadRenderer"}, "test_datatype" : test_file})
 
     ))
 
@@ -620,14 +620,13 @@ class PinnedCustomField(TimeStampedModel):
     @cached_property
     def field_values(obj):
         data = copy(obj.FIELD_TYPE_CHOICES[obj.field_type]["data"])
-        tabular_schema = {}
+
         data["title"] = obj.name
         data["placeholder"] = obj.description
         
         display_form = copy(obj.FIELD_TYPE_CHOICES[obj.field_type]["display_form"])
         form = {}
         form["knownBy"] = obj.name
-        form["field_type"] = obj.field_type
         form["data"] = "custom_fields.%s" % obj.name
         form["position"] = obj.position
         form["key"] = obj.get_space_replaced_name
@@ -669,8 +668,9 @@ class PinnedCustomField(TimeStampedModel):
                                           }
                                         }
                                       }
-            data['default'] = {"attachments" : [], 'override_renderer': 'fileUploadRenderer'}
-            form["default"] = {"attachments" : [], 'override_renderer': 'fileUploadRenderer'}
+            data['default'] = {"attachments" : []}
+            form["default"] = {"attachments" : []}
+
 
         if obj.default:
             data['default'] = obj.default
