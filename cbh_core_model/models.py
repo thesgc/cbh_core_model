@@ -16,6 +16,16 @@ import django
 #from cbh_core_model.models import FlowFile
 from django.template.defaultfilters import slugify 
 from django_hstore import hstore
+#FlowFile relocation stuff
+
+import os
+from django.db.models.signals import pre_delete
+from django.dispatch.dispatcher import receiver
+from django.core.files.storage import default_storage
+from django.conf import settings
+from cbh_core_api.flowjs_settings import FLOWJS_PATH, FLOWJS_REMOVE_FILES_ON_DELETE, FLOWJS_AUTO_DELETE_CHUNKS
+from cbh_core_api.utils import chunk_upload_to
+
 
 PERMISSION_CODENAME_SEPARATOR = "__"
 OPEN = "open"
@@ -536,20 +546,55 @@ class PinnedCustomField(TimeStampedModel):
         #  "icon": "<span class ='glyphicon glyphicon-font'></span>", "type": "string", "format": "textarea"}, "test_datatype" : test_string}),
         (TEXTAREA, {"name": "Full text", "display_form":{"type" :"copyfield"}, "data": { "className": "htCenter htMiddle ","renderer_named" : "defaultCustomFieldRenderer",
          "icon": "<span class ='glyphicon glyphicon-font'></span>", "type": "string", "format": "ckeditor", "ckeditor":{ 'config.toolbar_Standard': [ { 'name': 'basicstyles', 'items' : [ 'Italic','Underline','Strike','Subscript','Superscript','-','RemoveFormat' ] }, ] },}, "test_datatype" : test_string}),
-        (UISELECT, {"name": "Choice field", "display_form":{"type" :"copyfield"}, "data": {"className": "htCenter htMiddle ",
-         "type": "string", "format": "uiselect", "renderer_named" : "defaultCustomFieldRenderer"}, "test_datatype" : test_string}),
+        (UISELECT, {"name": "Choice field", "display_form":{"type" :"copyfield"}, 
+            "data": {"className": "htCenter htMiddle ",
+         "type": "string", "format": "filtereddropdown", 
+         "renderer_named" : "defaultCustomFieldRenderer",
+         "options":{
+                          "tagging" : False,
+                          "fetchDataEventName" : "openedTaggingDropdown",
+                          "dataArrivesEventName" : "autoCompleteTaggingData",
+                          "multiple" : False,
+                          "staticItems" : [] 
+                },
+
+         }, "test_datatype" : test_string}),
         (INTEGER, {"name": "Integer field", "display_form":{"type" :"copyfield"}, "data": {"className": "htCenter htMiddle ",
          "icon": "<span class ='glyphicon glyphicon-stats'></span>", "type": "integer", "renderer_named" : "defaultCustomFieldRenderer"}, "test_datatype" : test_int}),
         (NUMBER, {"name": "Decimal field", "display_form":{"type" :"copyfield"}, "data": {"className": "htCenter htMiddle ",
          "icon": "<span class ='glyphicon glyphicon-sound-5-1'></span>", "type": "number", "renderer_named" : "defaultCustomFieldRenderer"}, "test_datatype": test_number}),
-        (UISELECTTAG, {"name": "Choice allowing create", "display_form":{"type" :"copyfield"}, "data":  {"className": "htCenter htMiddle ",
-         "icon": "<span class ='glyphicon glyphicon-tag'></span>", "type": "string", "format": "uiselect", "options":{}, "renderer_named" : "defaultCustomFieldRenderer"}, "test_datatype" : test_string}),
-        (UISELECTTAGS, {"name": "Tags field allowing create", "display_form":{"type" :"copyfield"}, "data": {"className": "htCenter htMiddle ","renderer_named" : "defaultCustomFieldRenderer" , "icon": "<span class ='glyphicon glyphicon-tags'></span>", "type": "array", "format": "uiselect", "options": {
-            "tagging": "tagFunction",
-            "taggingLabel": "(adding new)",
-            "taggingTokens": "ENTER",
-            'refreshDelay': 10
-        }}, "test_datatype" : test_string}),
+        (UISELECTTAG, {"name": "Choice allowing create", "display_form":{"type" :"copyfield"},
+         "data":  {"className": "htCenter htMiddle ",
+         "icon": "<span class ='glyphicon glyphicon-tag'></span>",
+          "type": "string", 
+          "format": "filtereddropdown", 
+          "options":{
+                          "tagging" : True,
+                          "fetchDataEventName" : "openedTaggingDropdown",
+                          "dataArrivesEventName" : "autoCompleteTaggingData",
+                          "multiple" : False,
+                          "staticItems" : [] 
+                }, "renderer_named" : "defaultCustomFieldRenderer"}, "test_datatype" : test_string}),
+        (UISELECTTAGS, {"name": "Tags field allowing create", 
+            "display_form":{"type" :"copyfield"}, 
+            "data": 
+            {"className": "htCenter htMiddle ",
+            "renderer_named" : "defaultCustomFieldRenderer" 
+            , "icon": "<span class ='glyphicon glyphicon-tags'></span>", 
+            "type": "array", 
+            "format": "filtereddropdown", 
+            "items": {
+                    "type": "string"
+                  },
+             "options":{
+                          "tagging" : True,
+                          "fetchDataEventName" : "openedTaggingDropdown",
+                          "dataArrivesEventName" : "autoCompleteTaggingData",
+                          "multiple" : True,
+                          "staticItems" : [] 
+                }
+            }, "test_datatype" : test_string
+            }),
         (PERCENTAGE, {"name": "Percentage field", "display_form":{"type" :"copyfield"}, "data": {"className": "htCenter htMiddle ","renderer_named" : "defaultCustomFieldRenderer",
          "icon": "<span class ='glyphicon'>%</span>", "type": "number", "maximum": 100.0, "minimum": 0.1}, "test_datatype": test_percentage}),
         (DATE,  {"name": "Date Field", "display_form":{"type" :"copyfield"}, "data": {"className": "htCenter htMiddle ", "renderer_named" : "defaultCustomFieldRenderer",
@@ -606,7 +651,7 @@ class PinnedCustomField(TimeStampedModel):
         items = [item.strip()
                  for item in self.allowed_values.split(",") if item.strip()]
         setitems = sorted(list(set(items)))
-        testdata = [{"label": item.strip(), "value": item.strip()}
+        testdata = [{"doc_count": 0, "key": item.strip()}
                     for item in setitems if item]
         return testdata
 
@@ -629,7 +674,7 @@ class PinnedCustomField(TimeStampedModel):
         form["knownBy"] = obj.name
         form["data"] = "custom_fields.%s" % obj.name
         form["position"] = obj.position
-        form["key"] = obj.get_space_replaced_name
+        form["key"] = obj.name
         display_form["key"] = obj.get_space_replaced_name
         form["title"] = obj.name
 
@@ -643,15 +688,21 @@ class PinnedCustomField(TimeStampedModel):
         #     #specify the default to be a flowfile
         #     data['default'] = models.ForeignKey(FlowFile, null=True, blank=True, default=None)
 
+        if obj.default:
+            data['default'] = obj.default
+        else:
+            data['default'] = ""
 
         if data["type"] == "array":
-            data['default'] = obj.default.split(",")
-        if obj.UISELECT in data.get("format", ""):
+            if obj.default:
+                data['default'] = obj.default.split(",")
+            else:
+                data['default'] = []
 
+        if "filtereddropdown" in data.get("format", ""):
+            form["type"] = "filtereddropdown"
             form["placeholder"] = "Choose..."
-            form["help"] = obj.description
-            data['items'] = obj.get_items_simple
-            form['permanent_items'] = obj.get_items_simple
+            data['options']['staticItems'] = obj.get_items_simple
 
         if data.get("format", False) == "file_upload":
             #will need to alter the init method here (so it's no longer using dataoverviewctrl)
@@ -672,14 +723,6 @@ class PinnedCustomField(TimeStampedModel):
             form["default"] = {"attachments" : []}
 
 
-        if obj.default:
-            data['default'] = obj.default
-        if obj.UISELECTTAGS == obj.field_type:
-            form["description"] = "Hit enter twice to add a new item or search existing items in the dropdown."
-
-        if obj.UISELECTTAGS == obj.field_type:
-            #set default to empty array or CSV from default field
-            data["default"] = []
 
         #add config options for ckeditor
         if data.get("format", False) == "ckeditor":
@@ -731,16 +774,6 @@ class Invitation(TimeStampedModel):
     def __unicode__(self):
         return self.name
 
-
-#FlowFile relocation stuff
-
-import os
-from django.db.models.signals import pre_delete
-from django.dispatch.dispatcher import receiver
-from django.core.files.storage import default_storage
-from django.conf import settings
-from cbh_core_api.flowjs_settings import FLOWJS_PATH, FLOWJS_REMOVE_FILES_ON_DELETE, FLOWJS_AUTO_DELETE_CHUNKS
-from cbh_core_api.utils import chunk_upload_to
 
 
 
