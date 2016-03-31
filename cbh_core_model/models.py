@@ -635,7 +635,7 @@ class PinnedCustomField(TimeStampedModel):
 
         form["description"] = obj.description
         form["disableSuccessState"] = True
-        form["feedback"] = False
+        form["feedback"] = True
         # form["allowed_values"] = obj.allowed_values
         # form["part_of_blinded_key"] = obj.part_of_blinded_key
         searchitems = []
