@@ -25,6 +25,7 @@ from django.core.files.storage import default_storage
 from django.conf import settings
 from cbh_core_api.flowjs_settings import FLOWJS_PATH, FLOWJS_REMOVE_FILES_ON_DELETE, FLOWJS_AUTO_DELETE_CHUNKS
 from cbh_core_api.utils import chunk_upload_to
+from cbh_utils.idgenerator import IncrementalIdGenerator
 
 
 PERMISSION_CODENAME_SEPARATOR = "__"
@@ -95,6 +96,17 @@ class ProjectPermissionManager(models.Manager):
     def sync_all_permissions(self):
         for proj in self.all():
             proj.sync_permissions()
+
+
+
+    def get_next_incremental_id_for_compound(self, project_id):
+        gen = IncrementalIdGenerator("project_%d" % project_id, maxReserveBuffer=1)
+        new_id = gen.getId()
+        if new_id == 1:
+            proj = self.get(pk=project_id)
+            while new_id != proj.project_counter_start:
+                new_id = gen.getId()
+        return new_id
 
 
 def get_permission_name(name, permission):
@@ -354,7 +366,6 @@ class DataFormConfig(TimeStampedModel):
                 **defaults)
             if not obj.parent_id:
                 obj.parent_id = new_object.id
-                print obj.parent_id
                 obj.save()
 #
 
@@ -383,6 +394,7 @@ class Project(TimeStampedModel, ProjectPermissionMixin):
         ProjectType, null=True, blank=True, default=None)
     is_default = models.BooleanField(default=False)
     enabled_forms = models.ManyToManyField(DataFormConfig, blank=True)
+    project_counter_start = models.IntegerField(default=1)
 
     class Meta:
         get_latest_by = 'created'
@@ -447,17 +459,7 @@ class SkinningConfig(SingletonModel):
 
     class Meta:
         verbose_name = "Skinning Configuration"
-    # we can eventually use this to specify different chem sketching tools
 
-
-# class DataTransformation(TimeStampedModel):
-#     name = models.CharField(max_length=100, null=True, blank=True, default=None)
-#     uri = models.CharField(max_length=1000, null=True, blank=True, default=None)
-#     target_repository_api
-#     patch = models.TextField()
-
-#     def __unicode__(self):
-#         return "%s - %s" % (self.name, self.uri)
 
 def test_string(value):
     return True
