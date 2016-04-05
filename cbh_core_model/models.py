@@ -189,6 +189,8 @@ class ProjectPermissionMixin(models.Model):
 
 
 class ProjectType(TimeStampedModel):
+    plateSizes = "96,48"
+    plateTypes = "working,backup"
     SAVED_SEARCH_TEMPLATE = [{
                             "required": False,
                             "field_type": "char",
@@ -201,6 +203,13 @@ class ProjectType(TimeStampedModel):
                             "open_or_restricted": "open",
                             "name": "URL"
                         }]
+    PLATE_MAP_TEMPLATE = [
+                        {"required":False, "field_type": "char", "open_or_restricted": "open", "name": "Name"},
+                        {"required":False, "field_type": "radios", "allowed_values": plateSizes, "open_or_restricted": "open", "name": "Plate Size"},
+                        {"required":False, "field_type": "char", "open_or_restricted": "open", "name": "Description"},
+                        {"required":False, "field_type": "radios", "allowed_values": plateTypes, "open_or_restricted": "open", "name": "Plate Type"},
+                      ]
+    DEFAULT_TEMPLATE = [{"required":False, "field_type": "char", "open_or_restricted": "open"},]
     ''' Allows configuration of parts of the app on a per project basis - initially will be used to separate out compound and inventory projects '''
     name = models.CharField(
         max_length=100, db_index=True, null=True, blank=True, default=None)
@@ -513,6 +522,7 @@ class PinnedCustomField(TimeStampedModel):
     UISELECT = "uiselect"
     INTEGER = "integer"
     NUMBER = "number"
+    RADIOS = "radios"
     UISELECTTAG = "uiselecttag"
     UISELECTTAGS = "uiselecttags"
     CHECKBOXES = "checkboxes"
@@ -599,6 +609,8 @@ class PinnedCustomField(TimeStampedModel):
             }),
         (PERCENTAGE, {"name": "Percentage field", "display_form":{"type" :"copyfield"}, "data": {"className": "htCenter htMiddle ","renderer_named" : "defaultCustomFieldRenderer",
          "icon": "<span class ='glyphicon'>%</span>", "type": "number", "maximum": 100.0, "minimum": 0.1}, "test_datatype": test_percentage}),
+        (RADIOS, {"name": "Radio buttons", "display_form":{"type" :"copyfield"}, "data": {"className": "htCenter htMiddle ","renderer_named" : "defaultCustomFieldRenderer",
+         "icon": "<span class ='glyphicon'>%</span>", "type": "string", "format":"radios"}, "test_datatype": test_string}),
         (DATE,  {"name": "Date Field", "display_form":{"type" :"copyfield"}, "data": {"className": "htCenter htMiddle ", "renderer_named" : "defaultCustomFieldRenderer",
          "icon": "<span class ='glyphicon glyphicon-calendar'></span>", "type": "string",   "format": "date"}, "test_datatype": test_stringdate}),
         (LINK, {"name": "Link to server or external", "display_form":{"type" :"copyfield"}, "data": {"className": "htCenter htMiddle ","renderer_named" : "defaultCustomFieldRenderer", "format": "href", "type":
@@ -682,7 +694,7 @@ class PinnedCustomField(TimeStampedModel):
 
         form["description"] = obj.description
         form["disableSuccessState"] = True
-        form["feedback"] = False
+        form["feedback"] = True
         # form["allowed_values"] = obj.allowed_values
         # form["part_of_blinded_key"] = obj.part_of_blinded_key
         searchitems = []
@@ -705,6 +717,12 @@ class PinnedCustomField(TimeStampedModel):
             form["type"] = "filtereddropdown"
             form["placeholder"] = "Choose..."
             data['options']['staticItems'] = obj.get_items_simple
+
+        if "radios" in data.get("format", ""):
+            form["type"] = "radios"
+            data['enum'] = [value["key"] for value in obj.get_items_simple]
+            form['titleMap'] = [{"name": value["key"], "value": value["key"]} for value in obj.get_items_simple]
+
 
         if data.get("format", False) == "file_upload":
             #will need to alter the init method here (so it's no longer using dataoverviewctrl)
