@@ -449,6 +449,8 @@ def update_project_key(sender, instance, **kwargs):
 pre_save.connect(update_project_key, sender=Project, dispatch_uid="proj_key")
 
 
+
+
 class SkinningConfig(SingletonModel):
 
     '''Holds information about custom system messages and other customisable elements'''
@@ -947,3 +949,20 @@ def flow_file_chunk_delete(sender, instance, **kwargs):
     Remove file when chunk is deleted
     """
     instance.file.delete(False)
+
+
+
+def print_name(sender, instance, **kwargs):
+    instance.project_key = slugify(instance.name)
+    print "saving"
+    print sender
+    print instance.__dict__
+    try:
+        print sender.objects.get(sender.id).__dict__
+    except:
+        print "new"
+
+pre_save.connect(print_name, sender=Project, dispatch_uid="proj_key1")
+pre_save.connect(print_name, sender=CustomFieldConfig, dispatch_uid="proj_key2")
+pre_save.connect(print_name, sender=PinnedCustomField, dispatch_uid="proj_key3")
+
