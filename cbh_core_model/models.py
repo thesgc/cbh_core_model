@@ -669,28 +669,29 @@ class PinnedCustomField(TimeStampedModel):
     field_key = models.CharField(max_length=500,  default="", help_text="field key value, not currently used perhaps deprecated")
     name = models.CharField(max_length=500, null=False, blank=False, help_text="Name of the field in the project, may contain any character apart from slashes and dots")
     description = models.CharField(
-        max_length=1024, blank=True, null=True, default="", help_text="Description of the field to be displatyed in the angular schema form when editing data")
+        max_length=1024, blank=True, null=True, default="", help_text="Description of the field to be displayed in the angular schema form when editing data")
     custom_field_config = models.ForeignKey(
-        "cbh_core_model.CustomFieldConfig", related_name='pinned_custom_field', default=None, null=True, blank=True)
-    required = models.BooleanField(default=False)
+        "cbh_core_model.CustomFieldConfig", related_name='pinned_custom_field', default=None, null=True, blank=True, help_text="the custom field config object this field is part of")
+    required = models.BooleanField(default=False, help_text="Whetehr the field is required")
     part_of_blinded_key = models.BooleanField(
-        default=False, verbose_name="blind key")
+        default=False, verbose_name="blind key", help_text="deprecated unused field")
     field_type = models.CharField(default="char", choices=(
-        (name, value["name"]) for name, value in FIELD_TYPE_CHOICES.items()), max_length=15, )
+        (name, value["name"]) for name, value in FIELD_TYPE_CHOICES.items()), max_length=15, help_text="The data type of the data to be added in the front end forms for this field" )
     allowed_values = models.CharField(
-        max_length=1024, blank=True, null=True, default="")
-    position = models.PositiveSmallIntegerField()
-    default = models.CharField(max_length=500, default="", blank=True)
+        max_length=1024, blank=True, null=True, default="", help_text="What values are allowed for this field")
+    position = models.PositiveSmallIntegerField(help_text="Auto-filled field that says what order the fields in a custom field config should be displayed int he form")
+    default = models.CharField(max_length=500, default="", blank=True, help_text="The default value of this field to be applied when adding data via the angular schema form")
 
     pinned_for_datatype = models.ForeignKey(
-        DataType, blank=True, null=True, default=None)
+        DataType, blank=True, null=True, default=None, help_text="deprecated")
     standardised_alias = models.ForeignKey(
-        "self", related_name="alias_mapped_from", blank=True, null=True, default=None)
+        "self", related_name="alias_mapped_from", blank=True, null=True, default=None,  help_text="deprecated")
     attachment_field_mapped_to = models.ForeignKey(
-        "self", related_name="attachment_field_mapped_from", blank=True, null=True, default=None)
-    open_or_restricted = models.CharField(max_length=20, default=OPEN, choices=RESTRICTION_CHOICES)
+        "self", related_name="attachment_field_mapped_from", blank=True, null=True, default=None,  help_text="deprecated")
+    open_or_restricted = models.CharField(max_length=20, default=OPEN, choices=RESTRICTION_CHOICES,  help_text="Whether to open up this field to people who only have viewer rights on the project")
 
     def validate_field(self, value):
+        """Data type testing for fields in the custom fields of a compound batch (possibly deprecated or unfinished"""
         if not value and self.required:
             return False
         else:
@@ -700,6 +701,7 @@ class PinnedCustomField(TimeStampedModel):
 
     @cached_property
     def get_items_simple(self):
+        """List the allowed values for a particular field"""
         items = [item.strip()
                  for item in self.allowed_values.split(",") if item.strip()]
         setitems = sorted(list(set(items)))
@@ -709,13 +711,16 @@ class PinnedCustomField(TimeStampedModel):
 
     @cached_property
     def get_space_replaced_name(self):
+        """Return the name of the field in a space replaced way for ealsticsearch (deprecated)"""
         return self.name.replace(u" ", u"__space__")
 
     def __unicode__(self):
+        """Unicode representation of the field"""
         return "%s  %s  %s" % (self.name, self.field_key,  self.field_type)
 
     @cached_property
     def field_values(obj):
+        """Pull out the data that is required when compiling the angular schema form JSON for a particular field"""
         data = copy(obj.FIELD_TYPE_CHOICES[obj.field_type]["data"])
 
         data["title"] = obj.name
@@ -818,11 +823,13 @@ class PinnedCustomField(TimeStampedModel):
         return (data, form, display_form)
 
     class Meta:
+        """Ordering by default in the model for use with tastypie related resource which does not give a way to order the related field values"""
         ordering = ['position']
         get_latest_by = 'created'
 
 
 class Invitation(TimeStampedModel):
+    """Invitation model which saves the fact that an invitation has been sent to a given user"""
     email = models.CharField(max_length=100)
     created_by = models.ForeignKey("auth.User")
     first_name = models.TextField(default="", null=True, blank=True, )
@@ -850,22 +857,24 @@ class CBHFlowFile(models.Model):
     ]
 
     # identification and file details
-    identifier = models.SlugField(max_length=255, unique=True, db_index=True)
-    original_filename = models.CharField(max_length=200)
-    total_size = models.IntegerField(default=0)
-    total_chunks = models.IntegerField(default=0)
+    identifier = models.SlugField(max_length=255, unique=True, db_index=True, help_text="String identifier built using the name and session id of the file for security so other sessions cannot access the file")
+    original_filename = models.CharField(max_length=200, help_text="The original filename of the file")
+    total_size = models.IntegerField(default=0, help_text="Size in bytes")
+    total_chunks = models.IntegerField(default=0, help_text="Number of chunks the file was split up into to upload")
 
     # current state
-    total_chunks_uploaded = models.IntegerField(default=0)
-    state = models.IntegerField(choices=STATE_CHOICES, default=STATE_UPLOADING)
-    created = models.DateTimeField(auto_now_add=True)
-    updated = models.DateField(auto_now=True)
-    project = models.ForeignKey("cbh_core_model.Project")
+    total_chunks_uploaded = models.IntegerField(default=0, help_text="Number of chunks uploaded so far")
+    state = models.IntegerField(choices=STATE_CHOICES, default=STATE_UPLOADING, help_text="Current status of the upload")
+    created = models.DateTimeField(auto_now_add=True, help_text="Date the upload was created")
+    updated = models.DateField(auto_now=True, help_text="Date the upload was updated")
+    project = models.ForeignKey("cbh_core_model.Project", help_text="Project that the uploaded file is associated with")
 
     def __unicode__(self):
+        """Unicode representation of the file"""
         return self.identifier
 
     def update(self):
+        """Check the status of the uploading chunks"""
         self.total_chunks_uploaded = self.chunks.count()
         super(CBHFlowFile, self).save()
         self.join_chunks()
@@ -916,7 +925,7 @@ class CBHFlowFile(models.Model):
 
     def join_chunks(self):
         """
-        Join all the chucks in one file
+        Join all the chunks in one file
         """
         if self.state == self.STATE_UPLOADING and self.total_chunks_uploaded == self.total_chunks:
 
@@ -950,7 +959,7 @@ class CBHFlowFileChunk(models.Model):
         ordering = ['number']
 
     # identification and file details
-    parent = models.ForeignKey(CBHFlowFile, related_name="chunks")
+    parent = models.ForeignKey(CBHFlowFile, related_name="chunks", )
     file = models.FileField(max_length=255, upload_to=chunk_upload_to)
     number = models.IntegerField()
     created_at = models.DateTimeField(auto_now_add=True)
@@ -990,9 +999,7 @@ def flow_file_chunk_delete(sender, instance, **kwargs):
 
 def print_name(sender, instance, **kwargs):
     instance.project_key = slugify(instance.name)
-    print "saving"
-    print sender
-    print instance.__dict__
+
     try:
         print sender.objects.get(sender.id).__dict__
     except:
