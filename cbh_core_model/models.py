@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+"""Core models for ChemBio Hub platform, covering objects required for configuration of the tool such as projects and skinning"""
 from django.db import models, connection
 
 from solo.models import SingletonModel
@@ -56,6 +57,7 @@ def get_all_project_ids_for_user_perms(perms, possible_perm_levels):
 
 
 def get_old_project_ids_for_user_perms(perms, possible_perm_levels):
+    """possibly deprecated"""
     pids = []
     for perm in perms:
         prms = str(perm).split(".")
@@ -67,14 +69,17 @@ def get_old_project_ids_for_user_perms(perms, possible_perm_levels):
 
 
 def get_old_all_project_ids_for_user(user, possible_perm_levels):
+    """deprecated"""
     return get_old_project_ids_for_user_perms(user.get_all_permissions(), possible_perm_levels)
 
 def get_old_all_project_ids_for_user(user, possible_perm_levels):
+    """deprecated"""
     return get_old_project_ids_for_user_perms(user.get_all_permissions(), possible_perm_levels)
 
 
 
 def get_all_project_ids_for_user(user, possible_perm_levels):
+    """Given a list of permission levels, extract all of the project ids for which the user has one of those permission levels"""
     return get_all_project_ids_for_user_perms(user.get_all_permissions(), possible_perm_levels)
 
 
@@ -92,14 +97,16 @@ def get_projects_where_fields_restricted(user):
 
 
 class ProjectPermissionManager(models.Manager):
-
+    """Manager methods to be inherited by the project object to manage permissions on projects"""
     def sync_all_permissions(self):
+        """Run trough all of the projects on the system and sync up the permission objects that they require"""
         for proj in self.all():
             proj.sync_permissions()
 
 
 
     def get_next_incremental_id_for_compound(self, project_id):
+        """Using the Redis ID generator retrieve the next ID for this project"""
         gen = IncrementalIdGenerator("project_%d" % project_id, maxReserveBuffer=1)
         new_id = gen.getId()
         if new_id == 1:
@@ -110,9 +117,15 @@ class ProjectPermissionManager(models.Manager):
 
 
 def get_permission_name(name, permission):
+    """Generate a permission name so that we have something to display in the django admin UI in the dropdown selector"""
     return "%s%s%s" % (name, PERMISSION_CODENAME_SEPARATOR, permission)
 
 def get_permission_codename(id, permission):
+    """For a given project a set of permissions are generated in django like
+    2__owner
+    2__editor
+    2__viewer
+    This function generates these codenames"""
     return "%d%s%s" % (id, PERMISSION_CODENAME_SEPARATOR, permission)
 
 
@@ -125,6 +138,7 @@ class ProjectPermissionMixin(models.Model):
     objects = ProjectPermissionManager()
 
     def get_project_key(self):
+        """Not sure if used, possibly never had time to integrate so deprecated"""
         return str(self.pk)
 
     def sync_old_permissions(self):
@@ -144,17 +158,20 @@ class ProjectPermissionMixin(models.Model):
 
 
     def get_old_contenttype_for_instance(self):
+        """deprecated"""
         ct = ContentType.objects.get(
             app_label=self.get_project_key(), model=self)
         return ct
 
     def get_contenttype_for_instance(self):
+        """All project permissions now simply sit under the project content type"""
         ct = ContentType.objects.get_for_model(self)
         return ct
 
 
 
     def get_instance_permission_by_codename(self, codename):
+        """Get or create a permission object for a given codename on this project"""
         pm, created = Permission.objects.get_or_create(
             codename=get_permission_codename(self.id, codename), 
             content_type_id=self.get_contenttype_for_instance().id, 
@@ -162,6 +179,7 @@ class ProjectPermissionMixin(models.Model):
         return pm
 
     def _add_instance_permissions_to_user_or_group(self, group_or_user, codename):
+        """Give a user a given permission on a project"""
         if type(group_or_user) == Group:
             group_or_user.permissions.add(
                 self.get_instance_permission_by_codename(codename))
@@ -172,23 +190,27 @@ class ProjectPermissionMixin(models.Model):
     
 
     def make_editor(self, group_or_user):
+        """Make a user object an editor of a project"""
         self._add_instance_permissions_to_user_or_group(
             group_or_user,  "editor")
 
     def make_viewer(self, group_or_user):
+        """Make a user object an viewer of a project"""
         self._add_instance_permissions_to_user_or_group(
             group_or_user,   "viewer")
 
     def make_owner(self, group_or_user):
+        """Make a user object an owner of a project"""
         self._add_instance_permissions_to_user_or_group(
             group_or_user, "owner")
 
     class Meta:
-
+        """Abstract model as only used to inherit into project"""
         abstract = True
 
 
 class ProjectType(TimeStampedModel):
+    """The project type object"""
     plateSizes = "96,48"
     plateTypes = "working,backup"
     SAVED_SEARCH_TEMPLATE = [{
@@ -212,18 +234,19 @@ class ProjectType(TimeStampedModel):
     DEFAULT_TEMPLATE = [{"required":False, "field_type": "char", "open_or_restricted": "open"},]
     ''' Allows configuration of parts of the app on a per project basis - initially will be used to separate out compound and inventory projects '''
     name = models.CharField(
-        max_length=100, db_index=True, null=True, blank=True, default=None)
-    show_compounds = models.BooleanField(default=True)
-    saved_search_project_type = models.BooleanField(default=False)
-    plate_map_project_type = models.BooleanField(default=False)
+        max_length=100, db_index=True, null=True, blank=True, default=None, help_text="Name of the project type")
+    show_compounds = models.BooleanField(default=True, help_text="Whether this project type should show compounds")
+    saved_search_project_type = models.BooleanField(default=False, help_text="Whether this project type is to be used in saved searches")
+    plate_map_project_type = models.BooleanField(default=False, help_text="Whether this project type is for plate maps")
     #Set the default to -1 to match the empty default custom field config
-    custom_field_config_template_id = models.IntegerField(default=None, null=True, blank=True,)
-    set_as_default = models.BooleanField(default=False)
+    custom_field_config_template_id = models.IntegerField(default=None, null=True, blank=True, help_text="If you wish for this project type to include a set of default fields, find an appropriate custom field config ID to use as a template and add it here")
+    set_as_default = models.BooleanField(default=False, help_text="Whether this project type should be used as the default project type on the system, set back to false if another project type is set as default")
     def __unicode__(self):
         return self.name
 
 
 def make_default(sender, instance, **kwargs):
+    """Ensure that there is only one default project type set at a time"""
     if instance.set_as_default:
         ProjectType.objects.exclude(pk=instance.id).update(set_as_default=False)
 
@@ -234,6 +257,7 @@ post_save.connect(make_default, sender=ProjectType, dispatch_uid="ptype")
 
 
 class DataType(TimeStampedModel):
+    """Deprecated part of assayreg"""
     name = models.CharField(unique=True, max_length=500)
     uri = models.CharField(max_length=1000, default="")
     version = models.CharField(max_length=10, default="")
@@ -246,6 +270,7 @@ class DataType(TimeStampedModel):
 
 
 class CustomFieldConfigManager(models.Manager):
+    """Manage functions for custom field configs"""
     def from_schema_lists(self, data, names, data_types, widths, name, creator):
         '''
             Based on the lists of data and data types parsed from a single excel sheet or other tabular data...
@@ -286,7 +311,7 @@ class CustomFieldConfig(TimeStampedModel):
 
 class DataFormConfig(TimeStampedModel):
 
-    '''Shared configuration object - all projects can see this and potentially use it
+    '''deprecated Shared configuration object - all projects can see this and potentially use it
     Object name comes from a concatentaion of all of the levels of custom field config
     '''
     created_by = models.ForeignKey("auth.User")
@@ -390,20 +415,19 @@ class DataFormConfig(TimeStampedModel):
 
 
 class Project(TimeStampedModel, ProjectPermissionMixin):
-
-    ''' Project is a holder for moleculedictionary objects and for batches'''
+    ''' Project is a holder for moleculedictionary objects and for batches and permissions on the system are inherited from the project'''
     name = models.CharField(
-        max_length=100, db_index=True, null=True, blank=True, default=None)
+        max_length=100, db_index=True, null=True, blank=True, default=None, help_text="What would you like to call your project")
     project_key = models.SlugField(
-        max_length=50, db_index=True, null=True, blank=True, default=None, unique=True)
-    created_by = models.ForeignKey("auth.User")
+        max_length=50, db_index=True, null=True, blank=True, default=None, unique=True, help_text="key for the project, mostly deprecated in favour of id now but still used in some places")
+    created_by = models.ForeignKey("auth.User", help_text="User who created the project")
     custom_field_config = models.ForeignKey(
-        "cbh_core_model.CustomFieldConfig", related_name="project", null=True, blank=True, default=None, )
+        "cbh_core_model.CustomFieldConfig", related_name="project", null=True, blank=True, default=None, help_text="Custom field config object which is linked to this project")
     project_type = models.ForeignKey(
-        ProjectType, null=True, blank=True, default=None)
-    is_default = models.BooleanField(default=False)
-    enabled_forms = models.ManyToManyField(DataFormConfig, blank=True)
-    project_counter_start = models.IntegerField(default=1)
+        ProjectType, null=True, blank=True, default=None, help_text="Project type that this project is linked to")
+    is_default = models.BooleanField(default=False, help_text="deprecated field not used for anythign")
+    enabled_forms = models.ManyToManyField(DataFormConfig, blank=True, help_text="deprecated field not used for anything")
+    project_counter_start = models.IntegerField(default=1, help_text="start of the incremental ID field for this project")
 
     class Meta:
         get_latest_by = 'created'
@@ -443,6 +467,7 @@ def sync_permissions(sender, instance, created, **kwargs):
 post_save.connect(sync_permissions, sender=Project, dispatch_uid="proj_perms")
 
 def update_project_key(sender, instance, **kwargs):
+    """Set the project key for a given project"""
     instance.project_key = slugify(instance.name)
 
 
@@ -456,15 +481,15 @@ class SkinningConfig(SingletonModel):
     '''Holds information about custom system messages and other customisable elements'''
     #created_by = models.ForeignKey("auth.User")
     instance_alias = models.CharField(
-        max_length=50, null=True, blank=False, default='ChemiReg')
+        max_length=50, null=True, blank=False, default='ChemiReg', help_text="What the instance of ChemBio Hub should be labelled as (not really used, deprecated")
     project_alias = models.CharField(
-        max_length=50, null=True, blank=False, default='project')
+        max_length=50, null=True, blank=False, default='project', help_text="What projects on the system should be called (not really used, could be deprecated)")
     result_alias = models.CharField(
-        max_length=50, null=True, blank=False, default='result')
-    file_errors_from_backend = models.NullBooleanField(default=False)
-    enable_smiles_input = models.NullBooleanField(default=True)
-    data_manager_email = models.CharField(max_length=100, default="")
-    data_manager_name = models.CharField(max_length=100, default="")
+        max_length=50, null=True, blank=False, default='result', help_text="What search results on the system should be called (not really used, could be deprecated)")
+    file_errors_from_backend = models.NullBooleanField(default=False, help_text="Whether the error message on file upload should be the exception message from the back end")
+    enable_smiles_input = models.NullBooleanField(default=True, help_text="Whether the SMILES input field should be enabled when adding multiple compounds")
+    data_manager_email = models.CharField(max_length=100, default="", help_text="Email address for support requests")
+    data_manager_name = models.CharField(max_length=100, default="", help_text="Name of support requests manager")
     def __unicode__(self):
         return u"Skinning Configuration"
 
@@ -473,18 +498,22 @@ class SkinningConfig(SingletonModel):
 
 
 def test_string(value):
+    """Possibly deprecated"""
     return True
 
 def test_bool(value):
+    """Possibly deprecated"""
     return False
 
 
 def test_file(value):
+    """Possibly deprecated"""
     return False
 
 
 
 def test_int(value):
+    """Check if an input value is an integer, not sure if this is used, possibly deprecated"""
     try:
         floatval = float(value)
         intval = int(value)
@@ -494,6 +523,7 @@ def test_int(value):
         return False
 
 def test_number(value):
+    """Check if an input value is an number, not sure if this is used, possibly deprecated"""
     try:
         floatval = float(value)
         return True
@@ -502,6 +532,7 @@ def test_number(value):
 
 
 def test_stringdate(value):
+    """Check if an input value is an date, not sure if this is used, possibly deprecated"""
     try:
         curated_value = dateutil.parser.parse(unicode(value)).strftime("%Y-%m-%d")
         return curated_value
@@ -509,6 +540,7 @@ def test_stringdate(value):
         return False
 
 def test_percentage(value):
+    """Check if an input value is an percentage, not sure if this is used, possibly deprecated"""
     result = test_number(value)
     if result:
         if float(val) > 0 and float(val) < 100:
@@ -519,6 +551,9 @@ def test_percentage(value):
 
 
 class PinnedCustomField(TimeStampedModel):
+    """PinnedCustomField is the model 
+    which stores all of the information about 
+    a particular field in a project"""
     TEXT = "text"
     TEXTAREA = "textarea"
     UISELECT = "uiselect"
@@ -538,6 +573,7 @@ class PinnedCustomField(TimeStampedModel):
 
 
     def pandas_converter(self, field_length, pandas_dtype):
+        """Convert a variable from its pandas datatype, not sure if used podssibly deprecated"""
         dtype = str(pandas_dtype)
         if dtype == "int64":
             return self.INTEGER
@@ -630,10 +666,10 @@ class PinnedCustomField(TimeStampedModel):
 
     ))
 
-    field_key = models.CharField(max_length=500,  default="")
-    name = models.CharField(max_length=500, null=False, blank=False)
+    field_key = models.CharField(max_length=500,  default="", help_text="field key value, not currently used perhaps deprecated")
+    name = models.CharField(max_length=500, null=False, blank=False, help_text="Name of the field in the project, may contain any character apart from slashes and dots")
     description = models.CharField(
-        max_length=1024, blank=True, null=True, default="")
+        max_length=1024, blank=True, null=True, default="", help_text="Description of the field to be displatyed in the angular schema form when editing data")
     custom_field_config = models.ForeignKey(
         "cbh_core_model.CustomFieldConfig", related_name='pinned_custom_field', default=None, null=True, blank=True)
     required = models.BooleanField(default=False)
