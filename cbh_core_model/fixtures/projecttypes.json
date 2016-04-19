@@ -1,6 +1,7 @@
 [{
     "fields": {
-        "name": "Compounds"
+        "name": "Compounds",
+        "set_as_default" : true
     },
     "model": "cbh_core_model.projecttype",
     "pk": 1
