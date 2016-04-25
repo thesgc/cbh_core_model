@@ -779,7 +779,7 @@ class PinnedCustomField(TimeStampedModel):
                                             'success': 'success(file, formkey)',
                                             'removeFile': 'removeFile(formkey, index, url)',
                                             'imageFunction': 'fetchImage(url)',
-                                            'sizeCheck': 'sizeCheck(file, formKey)'
+                                            'sizeCheck': 'sizeCheck(file, formkey)'
                                           }
                                         }
                                       }
