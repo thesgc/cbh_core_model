@@ -226,10 +226,10 @@ class ProjectType(TimeStampedModel):
                             "name": "URL"
                         }]
     PLATE_MAP_TEMPLATE = [
-                        {"required":False, "field_type": "char", "open_or_restricted": "open", "name": "Name"},
-                        {"required":False, "field_type": "radios", "allowed_values": plateSizes, "open_or_restricted": "open", "name": "Plate Size"},
+                        {"required":True, "field_type": "char", "open_or_restricted": "open", "name": "Name"},
+                        {"required":True, "field_type": "radios", "allowed_values": plateSizes, "open_or_restricted": "open", "name": "Plate Size"},
                         {"required":False, "field_type": "char", "open_or_restricted": "open", "name": "Description"},
-                        {"required":False, "field_type": "radios", "allowed_values": plateTypes, "open_or_restricted": "open", "name": "Plate Type"},
+                        {"required":True, "field_type": "radios", "allowed_values": plateTypes, "open_or_restricted": "open", "name": "Plate Type"},
                       ]
     DEFAULT_TEMPLATE = [{"required":False, "field_type": "char", "open_or_restricted": "open"},]
     ''' Allows configuration of parts of the app on a per project basis - initially will be used to separate out compound and inventory projects '''
@@ -778,7 +778,8 @@ class PinnedCustomField(TimeStampedModel):
                                             'init': {},
                                             'success': 'success(file, formkey)',
                                             'removeFile': 'removeFile(formkey, index, url)',
-                                            'imageFunction': 'fetchImage(url)'
+                                            'imageFunction': 'fetchImage(url)',
+                                            'sizeCheck': 'sizeCheck(file, formKey)'
                                           }
                                         }
                                       }
