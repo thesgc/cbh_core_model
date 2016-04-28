@@ -9,7 +9,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth.models import Permission, User, Group
 from collections import OrderedDict
 from django.utils.functional import cached_property
-from copy import copy
+from copy import copy, deepcopy
 import json
 import dateutil
 import time
@@ -756,6 +756,9 @@ class PinnedCustomField(TimeStampedModel):
             else:
                 data['default'] = []
 
+            if obj.required:
+                form["minLength"] = 1
+
         if "filtereddropdown" in data.get("format", ""):
             form["type"] = "filtereddropdown"
             form["placeholder"] = "Choose..."
@@ -821,7 +824,7 @@ class PinnedCustomField(TimeStampedModel):
                 stuff = data.pop(item, None)
                 if stuff:
                     form[item] = stuff
-        return (data, form, display_form)
+        return (deepcopy(data) , deepcopy(form), deepcopy(display_form))
 
     class Meta:
         """Ordering by default in the model for use with tastypie related resource which does not give a way to order the related field values"""
